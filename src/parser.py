@@ -20,8 +20,13 @@ class IntentParser:
             "react": ["react", "reactjs", "react.js"],
             "angular": ["angular", "angularjs"],
             "node": ["node", "nodejs", "node.js"],
-            "javascript": ["javascript", "js", "ecmascript"],
-            "typescript": ["typescript", "ts"],
+            "javascript": [
+                "javascript",
+                "ecmascript"
+            ],
+            "typescript": [
+                "typescript"
+            ],
             "mongodb": ["mongodb", "mongo"],
             "linux": ["linux", "unix", "ubuntu"],
             "networking": ["network", "networking", "tcp", "udp"],
@@ -201,7 +206,9 @@ class IntentParser:
         # --------------------------------------------------
         for skill, aliases in self.skills.items():
             for alias in aliases:
-                if alias in q:
+                # Exact word matching
+                pattern = r"\b" + re.escape(alias.lower()) + r"\b"
+                if re.search(pattern, q):
                     intent["skills"].append(skill)
                     break
 
@@ -210,7 +217,9 @@ class IntentParser:
         # --------------------------------------------------
         for domain, aliases in self.domain_dictionary.items():
             for alias in aliases:
-                if alias in q:
+                # Exact word matching
+                pattern = r"\b" + re.escape(alias.lower()) + r"\b"
+                if re.search(pattern, q):
                     intent["domains"].append(domain)
                     break
 
@@ -219,7 +228,9 @@ class IntentParser:
         # --------------------------------------------------
         for assessment_type, aliases in self.assessment_type_dictionary.items():
             for alias in aliases:
-                if alias in q:
+                # Exact word matching
+                pattern = r"\b" + re.escape(alias.lower()) + r"\b"
+                if re.search(pattern, q):
                     intent["assessment_types"].append(assessment_type)
                     break
 
@@ -228,7 +239,9 @@ class IntentParser:
         # --------------------------------------------------
         for level, aliases in self.job_levels.items():
             for alias in aliases:
-                if alias in q:
+                # Exact word matching
+                pattern = r"\b" + re.escape(alias.lower()) + r"\b"
+                if re.search(pattern, q):
                     intent["job_level"] = level
                     break
 
