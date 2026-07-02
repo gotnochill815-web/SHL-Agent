@@ -84,14 +84,16 @@ def latest_user_message(messages):
 
 
 def needs_clarification(intent, conversation: str):
+    """
+    Decide whether enough information is available
+    to recommend assessments.
+    """
+    skills = intent.get("skills", [])
+    assessment_types = intent.get("assessment_types", [])
+
     conversation = conversation.lower()
 
-    # -----------------------------
-    # Check whether seniority is mentioned
-    # -----------------------------
     seniority_keywords = [
-        "intern",
-        "graduate",
         "entry",
         "entry-level",
         "junior",
@@ -99,12 +101,13 @@ def needs_clarification(intent, conversation: str):
         "mid-level",
         "senior",
         "lead",
-        "principal",
         "manager",
         "director",
+        "intern",
+        "graduate",
+        "experience",
         "years",
         "year",
-        "experience",
     ]
 
     has_seniority = any(
@@ -112,41 +115,31 @@ def needs_clarification(intent, conversation: str):
         for word in seniority_keywords
     )
 
-    # -----------------------------
-    # No technical/domain info at all
-    # -----------------------------
-    has_role_information = (
-        len(intent["skills"]) > 0
-        or len(intent["domains"]) > 0
-        or len(intent["assessment_types"]) > 0
-    )
-
-    if not has_role_information:
+    # No useful information
+    if not skills and not assessment_types:
         return True
 
-    # -----------------------------
-    # We know the technology but not the level
-    # Ask one clarification.
-    # -----------------------------
-    if not has_seniority:
+    # We know the technology but not the seniority
+    if skills and not has_seniority:
         return True
 
     return False
 
 
 def build_reply(intent, recommendations):
-    if len(recommendations) == 0:
+    if not recommendations:
         return (
             "I couldn't find a suitable SHL assessment. "
             "Could you provide more details about the role?"
         )
 
-    skills = ", ".join(intent["skills"])
+    skills = intent.get("skills", [])
 
     if skills:
         return (
             f"I found {len(recommendations)} SHL assessments "
-            f"that match a role requiring {skills}."
+            f"that best match a role requiring "
+            f"{', '.join(skills)}."
         )
 
     return (
@@ -235,7 +228,11 @@ def chat(request: ChatRequest):
         # --------------------------------------------------
         if is_out_of_scope(conversation):
             return {
-                "reply": "I can only answer questions related to SHL assessments and recommend assessments from the SHL catalog.",
+                "reply": (
+                    "Sorry, I can only answer questions related to "
+                    "SHL assessments and recommend assessments from "
+                    "the SHL catalog."
+                ),
                 "recommendations": [],
                 "end_of_conversation": True,
             }
@@ -269,21 +266,23 @@ def chat(request: ChatRequest):
 
                 if a and b:
                     comparison = f"""
-Comparison
+SHL Assessment Comparison
 
-{names[0]}
+Assessment 1
+-------------
+Name: {a.get("name")}
+Category: {", ".join(a.get("category", []))}
+Duration: {a.get("duration_minutes")} minutes
+Remote Testing: {a.get("remote")}
+Adaptive: {a.get("adaptive")}
 
-Category: {', '.join(a.get('category', []))}
-Duration: {a.get('duration_minutes')} minutes
-Remote: {a.get('remote')}
-Adaptive: {a.get('adaptive')}
-
-{names[1]}
-
-Category: {', '.join(b.get('category', []))}
-Duration: {b.get('duration_minutes')} minutes
-Remote: {b.get('remote')}
-Adaptive: {b.get('adaptive')}
+Assessment 2
+-------------
+Name: {b.get("name")}
+Category: {", ".join(b.get("category", []))}
+Duration: {b.get("duration_minutes")} minutes
+Remote Testing: {b.get("remote")}
+Adaptive: {b.get("adaptive")}
 """
 
                     return {
@@ -309,12 +308,32 @@ Adaptive: {b.get('adaptive')}
         # Clarification
         # --------------------------------------------------
         if needs_clarification(intent, conversation):
-            return {
-                "reply": (
-                    "Sure! Before I recommend assessments, "
+            skills = intent.get("skills", [])
+            job_levels = intent.get("job_levels", [])
+
+            if not skills:
+                reply = (
+                    "I'd be happy to help. "
+                    "Could you tell me the primary skills or technologies "
+                    "required for this role? "
+                    "(For example: Java, Python, SQL, AWS, React.)"
+                )
+
+            elif not job_levels:
+                reply = (
+                    "Thanks! Before I recommend assessments, "
                     "what is the seniority level for this role? "
                     "(Entry, Mid, or Senior)"
-                ),
+                )
+
+            else:
+                reply = (
+                    "Could you also specify whether you're looking for "
+                    "technical, personality, leadership, or cognitive assessments?"
+                )
+
+            return {
+                "reply": reply,
                 "recommendations": [],
                 "end_of_conversation": False,
             }
