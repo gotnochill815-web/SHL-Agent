@@ -208,7 +208,7 @@ class IntentParser:
                     break
 
         # --------------------------------------------------
-        # Job Level (from explicit mentions)
+        # Job Level (from explicit mentions with word boundaries)
         # --------------------------------------------------
         for level, aliases in self.job_levels.items():
             for alias in aliases:
@@ -230,6 +230,19 @@ class IntentParser:
                         break
                 if intent["job_level"] is not None:
                     break
+
+        # --------------------------------------------------
+        # Job Level FINAL FALLBACK (direct keyword matching)
+        # This ensures "Senior level" is always detected
+        # --------------------------------------------------
+        if intent["job_level"] is None:
+            q_lower = q.lower()
+            if "senior" in q_lower:
+                intent["job_level"] = "senior"
+            elif "mid" in q_lower or "intermediate" in q_lower:
+                intent["job_level"] = "mid"
+            elif "entry" in q_lower or "junior" in q_lower or "graduate" in q_lower:
+                intent["job_level"] = "entry"
 
         # --------------------------------------------------
         # Experience
