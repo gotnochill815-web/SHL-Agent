@@ -98,31 +98,31 @@ def merge_intents(previous_intent, current_intent):
     """
     merged = current_intent.copy()
     
-    # Merge skills
+    # Merge skills (keep both)
     prev_skills = previous_intent.get("skills", [])
     curr_skills = current_intent.get("skills", [])
     if prev_skills or curr_skills:
         merged["skills"] = list(set(prev_skills + curr_skills))
     
-    # Merge job_level (prioritize current if present, otherwise keep previous)
+    # Merge job_level - PRIORITIZE CURRENT, then fallback to previous
     if current_intent.get("job_level") is not None:
         merged["job_level"] = current_intent["job_level"]
     elif previous_intent.get("job_level"):
         merged["job_level"] = previous_intent["job_level"]
     
-    # Merge domains
+    # Merge domains (keep both)
     prev_domains = previous_intent.get("domains", [])
     curr_domains = current_intent.get("domains", [])
     if prev_domains or curr_domains:
         merged["domains"] = list(set(prev_domains + curr_domains))
     
-    # Merge assessment_types
+    # Merge assessment_types (keep both)
     prev_assessment_types = previous_intent.get("assessment_types", [])
     curr_assessment_types = current_intent.get("assessment_types", [])
     if prev_assessment_types or curr_assessment_types:
         merged["assessment_types"] = list(set(prev_assessment_types + curr_assessment_types))
     
-    # Merge role_context
+    # Merge role_context (prioritize current, then fallback to previous)
     if current_intent.get("role_context") is not None:
         merged["role_context"] = current_intent["role_context"]
     elif previous_intent.get("role_context"):
@@ -668,6 +668,7 @@ Level: {level_b if level_b else "Not specified"}
             
             unknown_level = has_unknown_level_phrase(conversation)
             
+            # Special Case: Leadership
             if role_context == "leadership" or "leadership" in domains:
                 if not skills and len(domains) <= 1:
                     return {
@@ -676,6 +677,7 @@ Level: {level_b if level_b else "Not specified"}
                         "end_of_conversation": False,
                     }
             
+            # Special Case: Contact Centre
             if role_context == "contact_centre" or "customer service" in domains:
                 if not languages:
                     return {
@@ -687,6 +689,7 @@ Level: {level_b if level_b else "Not specified"}
                         "end_of_conversation": False,
                     }
             
+            # No skills, domains, or role context detected
             if not skills and not has_skills_or_domain and not role_context:
                 if "leadership" in conversation.lower() or "executive" in conversation.lower():
                     reply = "Happy to help narrow that down. Who is this meant for?"
@@ -728,6 +731,7 @@ Level: {level_b if level_b else "Not specified"}
                     "end_of_conversation": False,
                 }
             
+            # We have skills/context but no job level
             if (skills or has_skills_or_domain or role_context) and job_level is None:
                 if unknown_level:
                     return {
@@ -751,6 +755,7 @@ Level: {level_b if level_b else "Not specified"}
                     "end_of_conversation": False,
                 }
             
+            # If we reach here, we have other missing information
             reply = (
                 "Could you also specify whether you're looking for "
                 "technical, personality, leadership, or cognitive assessments?"
