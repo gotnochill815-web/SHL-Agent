@@ -93,10 +93,23 @@ def needs_clarification(intent, conversation):
     job_level = intent.get("job_level")
     has_skills_or_domain = intent.get("has_skills_or_domain", False)
     role_context = intent.get("role_context")
+    domains = intent.get("domains", [])
+    languages = intent.get("languages", [])
     
     # No useful information at all - no skills, no domains, no role context
     if not skills and not assessment_types and not has_skills_or_domain and not role_context:
         return True
+    
+    # Special case: Leadership context - always ask for more context first
+    if role_context == "leadership" or "leadership" in domains:
+        # If we have leadership context but no specific role info
+        if not skills and len(domains) <= 1:
+            return True
+    
+    # Special case: Contact Centre - ask about language first
+    if role_context == "contact_centre" or "customer service" in domains:
+        if not languages:
+            return True
     
     # We have skills/context but no job level
     if (skills or has_skills_or_domain or role_context) and job_level is None:
@@ -145,6 +158,7 @@ def build_reply(intent, recommendations):
     job_level = intent.get("job_level")
     assessment_types = intent.get("assessment_types", [])
     role_context = intent.get("role_context")
+    domains = intent.get("domains", [])
 
     if skills and job_level:
         level_display = {
@@ -180,7 +194,7 @@ def build_reply(intent, recommendations):
             f"that best match a role requiring "
             f"{', '.join(skills)}."
         )
-    elif role_context:
+    elif role_context or domains:
         context_display = {
             "leadership": "leadership",
             "sales": "sales",
@@ -190,7 +204,7 @@ def build_reply(intent, recommendations):
             "plant_operator": "plant operator",
             "healthcare": "healthcare",
             "engineer": "engineering"
-        }.get(role_context, role_context)
+        }.get(role_context, role_context if role_context else " ".join(domains))
         
         if job_level:
             level_display = {
@@ -553,9 +567,36 @@ Level: {level_b if level_b else "Not specified"}
             job_level = intent.get("job_level")
             role_context = intent.get("role_context")
             has_skills_or_domain = intent.get("has_skills_or_domain", False)
+            domains = intent.get("domains", [])
+            languages = intent.get("languages", [])
             
             # Check if user said they're not sure or have no preference
             unknown_level = has_unknown_level_phrase(conversation)
+            
+            # --------------------------------------------------
+            # Special Case: Leadership - ask who it's for
+            # --------------------------------------------------
+            if role_context == "leadership" or "leadership" in domains:
+                if not skills and len(domains) <= 1:
+                    return {
+                        "reply": "Happy to help narrow that down. Who is this meant for?",
+                        "recommendations": [],
+                        "end_of_conversation": False,
+                    }
+            
+            # --------------------------------------------------
+            # Special Case: Contact Centre - ask about language
+            # --------------------------------------------------
+            if role_context == "contact_centre" or "customer service" in domains:
+                if not languages:
+                    return {
+                        "reply": (
+                            "For contact centre roles, language is an important consideration. "
+                            "What language will the calls be in?"
+                        ),
+                        "recommendations": [],
+                        "end_of_conversation": False,
+                    }
             
             # No skills, domains, or role context detected
             if not skills and not has_skills_or_domain and not role_context:
@@ -730,6 +771,9 @@ Level: {level_b if level_b else "Not specified"}
         }
 
     except Exception as e:
+        print(f"ERROR: {str(e)}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(
             status_code=500,
             detail=str(e),
