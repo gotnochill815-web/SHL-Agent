@@ -35,6 +35,17 @@ class IntentParser:
             "statistics": ["statistics"],
             "finance": ["financial", "accounting"],
             "leadership": ["leadership", "executive", "director", "cxo"],
+            "go": ["go", "golang"],
+            "ruby": ["ruby", "ruby on rails", "rails"],
+            "scala": ["scala"],
+            "kotlin": ["kotlin"],
+            "rust": ["rust"],
+            "cplusplus": ["c++", "cpp"],
+            "csharp": ["c#", "csharp"],
+            "html": ["html"],
+            "css": ["css"],
+            "git": ["git"],
+            "jira": ["jira"],
         }
 
         # --------------------------------------------------
