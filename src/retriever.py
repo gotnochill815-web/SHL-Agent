@@ -30,7 +30,7 @@ class HybridRetriever:
         self.catalog = self.filter_job_solutions(self.catalog)
 
         self.catalog_lookup = {
-            assessment["assessment_id"]: assessment
+            assessment["entity_id"]: assessment
             for assessment in self.catalog
         }
 
@@ -79,13 +79,12 @@ class HybridRetriever:
         for item in catalog:
             name = item.get("name", "").lower()
             description = item.get("description", "").lower()
-            category = " ".join(item.get("category", [])).lower()
+            category = " ".join(item.get("keys", [])).lower()
             
             # Keywords that indicate a Job Solution
             job_solution_keywords = [
                 "job solution",
                 "pre-packaged",
-                "job solution",
                 "solution",
                 "bundle",
                 "package"
@@ -118,10 +117,9 @@ class HybridRetriever:
             if not is_job_solution and "job_levels" not in item:
                 # Some Individual Tests might not have job_levels
                 # Check if it has test_type or is clearly an individual test
-                if "test_type" in item or "individual" in category:
+                if "keys" in item:
                     filtered.append(item)
-                # If it has duration and remote fields, it's likely an individual test
-                elif "duration_minutes" in item and "remote" in item:
+                elif "duration" in item and "remote" in item:
                     filtered.append(item)
             elif not is_job_solution:
                 filtered.append(item)
@@ -140,23 +138,42 @@ class HybridRetriever:
         if not name:
             return None
         
-        name = name.lower().strip()
-
+        name_lower = name.lower().strip()
+        
+        # Handle abbreviations and common variations
+        abbreviation_map = {
+            "opq": "Occupational Personality Questionnaire OPQ32r",
+            "gsa": "Global Skills Assessment",
+        }
+        
+        # If it's an abbreviation, map to full name
+        if name_lower in abbreviation_map:
+            name_to_match = abbreviation_map[name_lower].lower()
+        else:
+            name_to_match = name_lower
+        
+        # First try: exact match or partial match on mapped name
         for assessment in self.catalog:
-            assessment_name = assessment.get(
-                "name",
-                "",
-            ).lower()
-
-            if name == assessment_name:
+            assessment_name = assessment.get("name", "").lower()
+            
+            if name_to_match == assessment_name:
                 return assessment
-
-            if name in assessment_name:
+            if name_to_match in assessment_name:
                 return assessment
-
-            if assessment_name in name:
+            if assessment_name in name_to_match:
                 return assessment
-
+        
+        # Second try: original name
+        for assessment in self.catalog:
+            assessment_name = assessment.get("name", "").lower()
+            
+            if name_lower == assessment_name:
+                return assessment
+            if name_lower in assessment_name:
+                return assessment
+            if assessment_name in name_lower:
+                return assessment
+        
         return None
 
     # ======================================================
@@ -171,7 +188,6 @@ class HybridRetriever:
         for assessment in self.catalog:
             text = f"""
             {assessment.get("name","")}
-            {' '.join(assessment.get("category",[]))}
             {' '.join(assessment.get("job_levels",[]))}
             {assessment.get("description","")}
             """
@@ -283,7 +299,7 @@ class HybridRetriever:
     def retrieve(
         self,
         intent,
-        top_k=10,
+        top_k=30,
     ):
         # --------------------------------------------------
         # Query Expansion
@@ -345,7 +361,7 @@ class HybridRetriever:
 
             categories = " ".join(
                 assessment.get(
-                    "category",
+                    "keys",
                     [],
                 )
             ).lower()
@@ -373,9 +389,7 @@ class HybridRetriever:
 
             assessment["matched_skills"] = matched
 
-            item["score"] += boost
-
-        # --------------------------------------------------
+            item["score"] += boost        # --------------------------------------------------
         # Graph Expansion
         # --------------------------------------------------
         graph_results = []
@@ -384,7 +398,7 @@ class HybridRetriever:
 
         for result in semantic + keyword + metadata:
             aid = result["assessment"][
-                "assessment_id"
+                "entity_id"
             ]
 
             for neighbor in self.graph_expand(aid):
@@ -450,7 +464,7 @@ class HybridRetriever:
             # Domain Boost
             # ----------------------------
             categories = " ".join(
-                assessment.get("category", [])
+                assessment.get("keys", [])
             ).lower()
 
             for domain in intent.get("domains", []):
@@ -475,13 +489,13 @@ class HybridRetriever:
             # ----------------------------
             if (
                 intent.get("adaptive")
-                and assessment.get("adaptive")
+                and assessment.get("adaptive") == "yes"
             ):
                 retrieval_score += 0.3
 
             if (
                 intent.get("remote")
-                and assessment.get("remote")
+                and assessment.get("remote") == "yes"
             ):
                 retrieval_score += 0.3
 
@@ -503,14 +517,22 @@ class HybridRetriever:
         for result in results:
             assessment = result["assessment"]
 
-            duration = assessment.get(
-                "duration_minutes"
+            duration_str = assessment.get(
+                "duration"
             )
+
+            # Extract minutes from duration string if present
+            duration_minutes = None
+            if duration_str:
+                import re
+                minutes_match = re.search(r"(\d+)\s*(?:minutes?|mins?|min)", duration_str)
+                if minutes_match:
+                    duration_minutes = int(minutes_match.group(1))
 
             if (
                 intent.get("duration") is not None
-                and duration is not None
-                and duration > intent["duration"]
+                and duration_minutes is not None
+                and duration_minutes > intent["duration"]
             ):
                 continue
 
