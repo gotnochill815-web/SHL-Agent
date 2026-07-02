@@ -4,7 +4,7 @@ from typing import Dict, Any, List, Optional
 class IntentParser:
     def __init__(self):
         # --------------------------------------------------
-        # Skill Dictionary (expanded)
+        # Skill Dictionary
         # --------------------------------------------------
         self.skills = {
             "python": ["python", "django", "flask", "fastapi"],
@@ -53,23 +53,27 @@ class IntentParser:
         }
 
         # --------------------------------------------------
-        # Domain Dictionary (expanded)
+        # Domain Dictionary (expanded with more aliases)
         # --------------------------------------------------
         self.domain_dictionary = {
-            "finance": ["finance", "financial", "accounting", "banking"],
-            "healthcare": ["healthcare", "medical", "hospital", "hipaa", "patient records"],
-            "manufacturing": ["manufacturing", "industrial", "plant", "factory", "chemical"],
-            "customer service": ["customer service", "contact centre", "contact center", "call center", "call centre"],
-            "sales": ["sales", "selling", "retail", "re-skill"],
+            "finance": ["finance", "financial", "accounting", "banking", "investment"],
+            "healthcare": ["healthcare", "medical", "hospital", "hipaa", "patient", "health"],
+            "manufacturing": ["manufacturing", "industrial", "plant", "factory", "chemical", "facility"],
+            "customer service": [
+                "customer service", "contact centre", "contact center", 
+                "call center", "call centre", "contact centre agents",
+                "customer serv", "inbound calls", "customer support"
+            ],
+            "sales": ["sales", "selling", "retail", "re-skill", "sales organization", "sales team"],
             "software": ["software", "developer", "engineer", "programmer", "backend", "frontend", "full stack"],
-            "safety": ["safety", "compliance", "hazard", "dependability", "reliability"],
-            "leadership": ["leadership", "executive", "director", "cxo", "management trainee", "management scheme"],
-            "administration": ["admin", "administrative", "admin assistant", "office"],
-            "graduate": ["graduate", "final year", "recent graduate"],
+            "safety": ["safety", "compliance", "hazard", "dependability", "reliability", "safe"],
+            "leadership": ["leadership", "executive", "director", "cxo", "management", "senior leadership"],
+            "administration": ["admin", "administrative", "admin assistant", "office", "clerical"],
+            "graduate": ["graduate", "final year", "recent graduate", "trainee", "internship"],
         }
 
         # --------------------------------------------------
-        # Assessment Types (expanded)
+        # Assessment Types
         # --------------------------------------------------
         self.assessment_type_dictionary = {
             "coding": ["coding", "programming", "developer", "software engineer", "backend", "frontend", "full stack"],
@@ -96,7 +100,7 @@ class IntentParser:
         self.job_levels = {
             "entry": [
                 "graduate", "entry level", "entry", "fresher", "intern", "internship",
-                "junior", "associate", "beginner", "trainee", "final year"
+                "junior", "associate", "beginner", "trainee", "final year", "recent graduate"
             ],
             "mid": [
                 "mid", "mid level", "intermediate", "medium", "regular", "professional"
@@ -150,7 +154,7 @@ class IntentParser:
         }
 
         # --------------------------------------------------
-        # Skills
+        # Skills (exact word boundary matching)
         # --------------------------------------------------
         for skill, aliases in self.skills.items():
             for alias in aliases:
@@ -160,13 +164,25 @@ class IntentParser:
                     break
 
         # --------------------------------------------------
-        # Domains
+        # Domains (exact word boundary matching)
         # --------------------------------------------------
         for domain, aliases in self.domain_dictionary.items():
             for alias in aliases:
                 pattern = r"\b" + re.escape(alias.lower()) + r"\b"
                 if re.search(pattern, q):
                     intent["domains"].append(domain)
+                    break
+
+        # --------------------------------------------------
+        # Domains FALLBACK (simple substring matching for multi-word phrases)
+        # --------------------------------------------------
+        if not intent["domains"]:
+            for domain, aliases in self.domain_dictionary.items():
+                for alias in aliases:
+                    if alias in q:
+                        intent["domains"].append(domain)
+                        break
+                if intent["domains"]:
                     break
 
         # --------------------------------------------------
@@ -180,6 +196,18 @@ class IntentParser:
                     break
 
         # --------------------------------------------------
+        # Assessment Types FALLBACK (simple substring matching)
+        # --------------------------------------------------
+        if not intent["assessment_types"]:
+            for assessment_type, aliases in self.assessment_type_dictionary.items():
+                for alias in aliases:
+                    if alias in q:
+                        intent["assessment_types"].append(assessment_type)
+                        break
+                if intent["assessment_types"]:
+                    break
+
+        # --------------------------------------------------
         # Job Level (from explicit mentions)
         # --------------------------------------------------
         for level, aliases in self.job_levels.items():
@@ -190,6 +218,18 @@ class IntentParser:
                     break
             if intent["job_level"] is not None:
                 break
+
+        # --------------------------------------------------
+        # Job Level FALLBACK (simple substring matching)
+        # --------------------------------------------------
+        if intent["job_level"] is None:
+            for level, aliases in self.job_levels.items():
+                for alias in aliases:
+                    if alias in q:
+                        intent["job_level"] = level
+                        break
+                if intent["job_level"] is not None:
+                    break
 
         # --------------------------------------------------
         # Experience (extract years of experience)
@@ -211,7 +251,7 @@ class IntentParser:
                         break
 
         # --------------------------------------------------
-        # Role Context Detection (for queries without explicit skills)
+        # Role Context Detection
         # --------------------------------------------------
         for context, patterns in self.role_contexts.items():
             for pattern in patterns:
@@ -219,6 +259,35 @@ class IntentParser:
                     intent["role_context"] = context
                     break
             if intent["role_context"] is not None:
+                break
+
+        # --------------------------------------------------
+        # Special Case: Leadership with no other context
+        # --------------------------------------------------
+        if "leadership" in q and not intent["skills"] and not intent["domains"]:
+            intent["domains"].append("leadership")
+            intent["role_context"] = "leadership"
+
+        # --------------------------------------------------
+        # Special Case: Contact Centre detection
+        # --------------------------------------------------
+        contact_centre_keywords = ["contact centre", "contact center", "call center", "call centre"]
+        for keyword in contact_centre_keywords:
+            if keyword in q:
+                if "customer service" not in intent["domains"]:
+                    intent["domains"].append("customer service")
+                intent["role_context"] = "contact_centre"
+                break
+
+        # --------------------------------------------------
+        # Special Case: Graduate detection
+        # --------------------------------------------------
+        graduate_keywords = ["graduate", "final year", "trainee", "internship"]
+        for keyword in graduate_keywords:
+            if keyword in q and "graduate" not in intent["domains"]:
+                intent["domains"].append("graduate")
+                if intent["role_context"] is None:
+                    intent["role_context"] = "graduate"
                 break
 
         # --------------------------------------------------
@@ -264,13 +333,23 @@ class IntentParser:
         )
 
         # --------------------------------------------------
-        # Check if we have any skills or domains
+        # Check if we have any skills or domains or role context
         # --------------------------------------------------
         intent["has_skills_or_domain"] = (
             len(intent["skills"]) > 0 or 
             len(intent["domains"]) > 0 or 
             intent["role_context"] is not None
         )
+
+        # --------------------------------------------------
+        # Special: Leadership roles should NOT be treated as skills
+        # that trigger immediate recommendations without context
+        # --------------------------------------------------
+        if intent["role_context"] == "leadership" and len(intent["skills"]) == 1 and "leadership" in intent["skills"]:
+            # Keep leadership as a domain but don't treat it as a skill for retrieval
+            # This ensures the system asks clarifying questions first
+            if "leadership" in intent["skills"]:
+                intent["skills"].remove("leadership")
 
         # --------------------------------------------------
         # Remove Duplicates
