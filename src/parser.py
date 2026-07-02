@@ -53,7 +53,7 @@ class IntentParser:
         }
 
         # --------------------------------------------------
-        # Domain Dictionary (expanded with more aliases)
+        # Domain Dictionary
         # --------------------------------------------------
         self.domain_dictionary = {
             "finance": ["finance", "financial", "accounting", "banking", "investment"],
@@ -113,7 +113,7 @@ class IntentParser:
         }
 
         # --------------------------------------------------
-        # Experience to Level Mapping (years of experience -> seniority)
+        # Experience to Level Mapping
         # --------------------------------------------------
         self.experience_to_level = [
             (0, 2, "entry"),
@@ -122,7 +122,7 @@ class IntentParser:
         ]
 
         # --------------------------------------------------
-        # Role/Context Detection (for queries without explicit skills)
+        # Role/Context Detection
         # --------------------------------------------------
         self.role_contexts = {
             "leadership": ["senior leadership", "executive", "cxo", "director", "management"],
@@ -174,7 +174,7 @@ class IntentParser:
                     break
 
         # --------------------------------------------------
-        # Domains FALLBACK (simple substring matching for multi-word phrases)
+        # Domains FALLBACK (simple substring matching)
         # --------------------------------------------------
         if not intent["domains"]:
             for domain, aliases in self.domain_dictionary.items():
@@ -196,7 +196,7 @@ class IntentParser:
                     break
 
         # --------------------------------------------------
-        # Assessment Types FALLBACK (simple substring matching)
+        # Assessment Types FALLBACK
         # --------------------------------------------------
         if not intent["assessment_types"]:
             for assessment_type, aliases in self.assessment_type_dictionary.items():
@@ -232,7 +232,7 @@ class IntentParser:
                     break
 
         # --------------------------------------------------
-        # Experience (extract years of experience)
+        # Experience
         # --------------------------------------------------
         years_match = re.search(
             r"(\d+)\s*(?:\+)?\s*(?:years?|yrs?|year|yr)",
@@ -262,14 +262,14 @@ class IntentParser:
                 break
 
         # --------------------------------------------------
-        # Special Case: Leadership with no other context
+        # Special Case: Leadership
         # --------------------------------------------------
         if "leadership" in q and not intent["skills"] and not intent["domains"]:
             intent["domains"].append("leadership")
             intent["role_context"] = "leadership"
 
         # --------------------------------------------------
-        # Special Case: Contact Centre detection
+        # Special Case: Contact Centre
         # --------------------------------------------------
         contact_centre_keywords = ["contact centre", "contact center", "call center", "call centre"]
         for keyword in contact_centre_keywords:
@@ -280,7 +280,7 @@ class IntentParser:
                 break
 
         # --------------------------------------------------
-        # Special Case: Graduate detection
+        # Special Case: Graduate
         # --------------------------------------------------
         graduate_keywords = ["graduate", "final year", "trainee", "internship"]
         for keyword in graduate_keywords:
@@ -291,7 +291,7 @@ class IntentParser:
                 break
 
         # --------------------------------------------------
-        # Duration (extract maximum duration in minutes)
+        # Duration
         # --------------------------------------------------
         duration_match = re.search(
             r"(?:under|less than)?\s*(\d+)\s*(?:minutes?|mins?|min)",
@@ -342,12 +342,9 @@ class IntentParser:
         )
 
         # --------------------------------------------------
-        # Special: Leadership roles should NOT be treated as skills
-        # that trigger immediate recommendations without context
+        # Special: Leadership should NOT be treated as a skill
         # --------------------------------------------------
         if intent["role_context"] == "leadership" and len(intent["skills"]) == 1 and "leadership" in intent["skills"]:
-            # Keep leadership as a domain but don't treat it as a skill for retrieval
-            # This ensures the system asks clarifying questions first
             if "leadership" in intent["skills"]:
                 intent["skills"].remove("leadership")
 
