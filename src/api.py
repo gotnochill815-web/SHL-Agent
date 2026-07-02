@@ -91,13 +91,15 @@ def needs_clarification(intent, conversation):
     skills = intent.get("skills", [])
     assessment_types = intent.get("assessment_types", [])
     job_level = intent.get("job_level")
+    has_skills_or_domain = intent.get("has_skills_or_domain", False)
+    role_context = intent.get("role_context")
     
-    # No useful information at all
-    if not skills and not assessment_types:
+    # No useful information at all - no skills, no domains, no role context
+    if not skills and not assessment_types and not has_skills_or_domain and not role_context:
         return True
     
-    # We have skills but no job level
-    if skills and job_level is None:
+    # We have skills/context but no job level
+    if (skills or has_skills_or_domain or role_context) and job_level is None:
         return True
     
     return False
@@ -142,6 +144,7 @@ def build_reply(intent, recommendations):
     skills = intent.get("skills", [])
     job_level = intent.get("job_level")
     assessment_types = intent.get("assessment_types", [])
+    role_context = intent.get("role_context")
 
     if skills and job_level:
         level_display = {
@@ -176,6 +179,33 @@ def build_reply(intent, recommendations):
             f"I found {len(recommendations)} SHL assessments "
             f"that best match a role requiring "
             f"{', '.join(skills)}."
+        )
+    elif role_context:
+        context_display = {
+            "leadership": "leadership",
+            "sales": "sales",
+            "contact_centre": "customer service",
+            "graduate": "graduate",
+            "admin": "administrative",
+            "plant_operator": "plant operator",
+            "healthcare": "healthcare",
+            "engineer": "engineering"
+        }.get(role_context, role_context)
+        
+        if job_level:
+            level_display = {
+                "entry": "Entry-level",
+                "mid": "Mid-level",
+                "senior": "Senior-level"
+            }.get(job_level, job_level.capitalize())
+            return (
+                f"I found {len(recommendations)} SHL assessments "
+                f"that best match a {level_display} {context_display} role."
+            )
+        
+        return (
+            f"I found {len(recommendations)} SHL assessments "
+            f"that best match a {context_display} role."
         )
 
     return (
@@ -521,25 +551,59 @@ Level: {level_b if level_b else "Not specified"}
         if needs_clarification(intent, conversation):
             skills = intent.get("skills", [])
             job_level = intent.get("job_level")
+            role_context = intent.get("role_context")
+            has_skills_or_domain = intent.get("has_skills_or_domain", False)
             
             # Check if user said they're not sure or have no preference
             unknown_level = has_unknown_level_phrase(conversation)
             
-            if not skills:
-                reply = (
-                    "I'd be happy to help. "
-                    "Could you tell me the primary skills or technologies "
-                    "required for this role? "
-                    "(For example: Java, Python, SQL, AWS, React.)"
-                )
+            # No skills, domains, or role context detected
+            if not skills and not has_skills_or_domain and not role_context:
+                # Check if there's any hint of what they're looking for
+                if "leadership" in conversation.lower() or "executive" in conversation.lower():
+                    reply = (
+                        "Happy to help narrow that down. Who is this meant for?"
+                    )
+                elif "sales" in conversation.lower():
+                    reply = (
+                        "For a sales organization, I can recommend several solutions. "
+                        "Could you tell me more about the specific roles and what you're trying to assess?"
+                    )
+                elif "contact" in conversation.lower() or "customer service" in conversation.lower():
+                    reply = (
+                        "For contact centre roles, language is an important consideration. "
+                        "What language will the calls be in?"
+                    )
+                elif "healthcare" in conversation.lower() or "medical" in conversation.lower():
+                    reply = (
+                        "For healthcare roles, there are some important considerations around language "
+                        "and regulatory requirements. Could you tell me more about the specific roles?"
+                    )
+                elif "graduate" in conversation.lower() or "trainee" in conversation.lower():
+                    reply = (
+                        "For graduate roles, I can recommend a full battery including cognitive, "
+                        "personality, and situational judgement. What specific areas are you looking to assess?"
+                    )
+                elif "safety" in conversation.lower() or "plant" in conversation.lower():
+                    reply = (
+                        "For safety-critical roles, I can recommend assessments focused on dependability "
+                        "and safety compliance. Could you tell me more about the specific role and context?"
+                    )
+                else:
+                    reply = (
+                        "I'd be happy to help. "
+                        "Could you tell me the primary skills or technologies "
+                        "required for this role? "
+                        "(For example: Java, Python, SQL, AWS, React.)"
+                    )
                 return {
                     "reply": reply,
                     "recommendations": [],
                     "end_of_conversation": False,
                 }
             
-            # We have skills but no job level
-            if skills and job_level is None:
+            # We have skills/context but no job level
+            if (skills or has_skills_or_domain or role_context) and job_level is None:
                 if unknown_level:
                     return {
                         "reply": (
