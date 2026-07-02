@@ -83,10 +83,70 @@ def latest_user_message(messages):
     return ""
 
 
+def merge_intents(previous_intent, current_intent):
+    """
+    Merge current intent with previous intent to preserve context across turns.
+    """
+    merged = current_intent.copy()
+    
+    # Merge skills
+    prev_skills = previous_intent.get("skills", [])
+    curr_skills = current_intent.get("skills", [])
+    if prev_skills or curr_skills:
+        merged["skills"] = list(set(prev_skills + curr_skills))
+    
+    # Merge job_level (prioritize current if present, otherwise keep previous)
+    if current_intent.get("job_level") is None and previous_intent.get("job_level"):
+        merged["job_level"] = previous_intent["job_level"]
+    
+    # Merge domains
+    prev_domains = previous_intent.get("domains", [])
+    curr_domains = current_intent.get("domains", [])
+    if prev_domains or curr_domains:
+        merged["domains"] = list(set(prev_domains + curr_domains))
+    
+    # Merge assessment_types
+    prev_assessment_types = previous_intent.get("assessment_types", [])
+    curr_assessment_types = current_intent.get("assessment_types", [])
+    if prev_assessment_types or curr_assessment_types:
+        merged["assessment_types"] = list(set(prev_assessment_types + curr_assessment_types))
+    
+    # Merge role_context (prioritize current if present, otherwise keep previous)
+    if current_intent.get("role_context") is None and previous_intent.get("role_context"):
+        merged["role_context"] = previous_intent["role_context"]
+    
+    # Merge has_skills_or_domain
+    if previous_intent.get("has_skills_or_domain"):
+        merged["has_skills_or_domain"] = True
+    
+    # Merge experience
+    if current_intent.get("experience") is None and previous_intent.get("experience"):
+        merged["experience"] = previous_intent["experience"]
+    
+    # Merge duration
+    if current_intent.get("duration") is None and previous_intent.get("duration"):
+        merged["duration"] = previous_intent["duration"]
+    
+    # Merge remote
+    if current_intent.get("remote") is None and previous_intent.get("remote") is not None:
+        merged["remote"] = previous_intent["remote"]
+    
+    # Merge adaptive
+    if current_intent.get("adaptive") is None and previous_intent.get("adaptive") is not None:
+        merged["adaptive"] = previous_intent["adaptive"]
+    
+    # Merge languages
+    prev_languages = previous_intent.get("languages", [])
+    curr_languages = current_intent.get("languages", [])
+    if prev_languages or curr_languages:
+        merged["languages"] = list(set(prev_languages + curr_languages))
+    
+    return merged
+
+
 def needs_clarification(intent, conversation):
     """
-    Decide whether enough information is available
-    to recommend assessments.
+    Decide whether enough information is available to recommend assessments.
     """
     skills = intent.get("skills", [])
     assessment_types = intent.get("assessment_types", [])
@@ -96,13 +156,12 @@ def needs_clarification(intent, conversation):
     domains = intent.get("domains", [])
     languages = intent.get("languages", [])
     
-    # No useful information at all - no skills, no domains, no role context
+    # No useful information at all
     if not skills and not assessment_types and not has_skills_or_domain and not role_context:
         return True
     
-    # Special case: Leadership context - always ask for more context first
+    # Special case: Leadership context - ask for more context first
     if role_context == "leadership" or "leadership" in domains:
-        # If we have leadership context but no specific role info
         if not skills and len(domains) <= 1:
             return True
     
@@ -269,9 +328,6 @@ def get_assessment_level(assessment):
 # ============================================================
 
 def filter_by_assessment_types(candidates, assessment_types):
-    """
-    Filter candidates by assessment type.
-    """
     if not assessment_types:
         return candidates
     
@@ -287,7 +343,6 @@ def filter_by_assessment_types(candidates, assessment_types):
                 filtered.append(item)
                 break
     
-    # If filtering returns too few results, return all candidates (graceful degradation)
     if len(filtered) < 3:
         return candidates
     
@@ -295,9 +350,6 @@ def filter_by_assessment_types(candidates, assessment_types):
 
 
 def filter_by_duration(candidates, max_duration):
-    """
-    Filter candidates by maximum duration in minutes.
-    """
     if not max_duration:
         return candidates
     
@@ -308,7 +360,6 @@ def filter_by_duration(candidates, max_duration):
         if duration is not None and duration <= max_duration:
             filtered.append(item)
     
-    # If filtering returns too few results, return all candidates (graceful degradation)
     if len(filtered) < 3:
         return candidates
     
@@ -316,10 +367,6 @@ def filter_by_duration(candidates, max_duration):
 
 
 def filter_by_remote(candidates, remote_preference):
-    """
-    Filter candidates by remote testing preference.
-    remote_preference: True (remote), False (onsite), None (no preference)
-    """
     if remote_preference is None:
         return candidates
     
@@ -330,7 +377,6 @@ def filter_by_remote(candidates, remote_preference):
         if remote == remote_preference:
             filtered.append(item)
     
-    # If filtering returns too few results, return all candidates (graceful degradation)
     if len(filtered) < 3:
         return candidates
     
@@ -338,10 +384,6 @@ def filter_by_remote(candidates, remote_preference):
 
 
 def filter_by_adaptive(candidates, adaptive_preference):
-    """
-    Filter candidates by adaptive preference.
-    adaptive_preference: True (adaptive), False (non-adaptive), None (no preference)
-    """
     if adaptive_preference is None:
         return candidates
     
@@ -352,7 +394,6 @@ def filter_by_adaptive(candidates, adaptive_preference):
         if adaptive == adaptive_preference:
             filtered.append(item)
     
-    # If filtering returns too few results, return all candidates (graceful degradation)
     if len(filtered) < 3:
         return candidates
     
@@ -360,9 +401,6 @@ def filter_by_adaptive(candidates, adaptive_preference):
 
 
 def is_turn_limit_reached(messages, max_turns=8):
-    """
-    Check if the conversation has reached the turn limit.
-    """
     return len(messages) >= max_turns
 
 
@@ -400,9 +438,6 @@ def is_out_of_scope(query: str):
 
 
 def normalize_job_level(level: str):
-    """
-    Normalize various job level descriptions to standard values.
-    """
     if not level:
         return None
     
@@ -550,6 +585,23 @@ Level: {level_b if level_b else "Not specified"}
         if raw_level:
             intent["job_level"] = normalize_job_level(raw_level)
 
+        # --------------------------------------------------
+        # Merge intent with previous turns
+        # --------------------------------------------------
+        user_messages = [m for m in request.messages if m.role.lower() == "user"]
+        if len(user_messages) > 1:
+            # Build previous context (excluding the last user message)
+            previous_context = "\n".join([m.content for m in user_messages[:-1]])
+            previous_intent = parser.parse(previous_context)
+            
+            # Normalize previous job level
+            if previous_intent.get("job_level"):
+                previous_intent["job_level"] = normalize_job_level(previous_intent["job_level"])
+            
+            # Merge intents
+            if previous_intent:
+                intent = merge_intents(previous_intent, intent)
+
         # Debug output
         print("=" * 60)
         print("Conversation:")
@@ -598,7 +650,9 @@ Level: {level_b if level_b else "Not specified"}
                         "end_of_conversation": False,
                     }
             
+            # --------------------------------------------------
             # No skills, domains, or role context detected
+            # --------------------------------------------------
             if not skills and not has_skills_or_domain and not role_context:
                 # Check if there's any hint of what they're looking for
                 if "leadership" in conversation.lower() or "executive" in conversation.lower():
@@ -643,7 +697,9 @@ Level: {level_b if level_b else "Not specified"}
                     "end_of_conversation": False,
                 }
             
+            # --------------------------------------------------
             # We have skills/context but no job level
+            # --------------------------------------------------
             if (skills or has_skills_or_domain or role_context) and job_level is None:
                 if unknown_level:
                     return {
@@ -689,26 +745,21 @@ Level: {level_b if level_b else "Not specified"}
         # --------------------------------------------------
         # Apply Filters
         # --------------------------------------------------
-        
-        # Filter by assessment type (e.g., "personality", "cognitive")
         assessment_types = intent.get("assessment_types", [])
         if assessment_types:
             candidates = filter_by_assessment_types(candidates, assessment_types)
             print(f"Filtered by assessment types: {assessment_types}, remaining: {len(candidates)}")
         
-        # Filter by duration (e.g., "under 20 minutes")
         duration = intent.get("duration")
         if duration:
             candidates = filter_by_duration(candidates, duration)
             print(f"Filtered by duration: {duration} minutes, remaining: {len(candidates)}")
         
-        # Filter by remote preference
         remote = intent.get("remote")
         if remote is not None:
             candidates = filter_by_remote(candidates, remote)
             print(f"Filtered by remote: {remote}, remaining: {len(candidates)}")
         
-        # Filter by adaptive preference
         adaptive = intent.get("adaptive")
         if adaptive is not None:
             candidates = filter_by_adaptive(candidates, adaptive)
@@ -731,19 +782,14 @@ Level: {level_b if level_b else "Not specified"}
         for item in ranked:
             assessment = item["assessment"]
             
-            # Get the actual assessment level
             assessment_level = get_assessment_level(assessment)
-            
-            # Get reasons with correct level
             reasons = explainer.explain(
                 assessment,
                 intent,
                 item.get("source", "rrf"),
             )
             
-            # Override the level in reasons if assessment has a known level
             if assessment_level:
-                # Remove any existing "Suitable for X candidates" reason
                 reasons = [r for r in reasons if not r.startswith("Suitable for")]
                 reasons.append(f"Suitable for {assessment_level} candidates")
 
