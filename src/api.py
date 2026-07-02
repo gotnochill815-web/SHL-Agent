@@ -1,4 +1,5 @@
 from typing import List
+import re
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware     
@@ -79,51 +80,60 @@ def latest_user_message(messages):
     for message in reversed(messages):
         if message.role.lower() == "user":
             return message.content
-
     return ""
 
 
-def needs_clarification(intent, conversation: str):
+def needs_clarification(intent, conversation):
     """
     Decide whether enough information is available
     to recommend assessments.
+    
+    Fix 1: Uses parser output instead of searching raw conversation.
     """
     skills = intent.get("skills", [])
     assessment_types = intent.get("assessment_types", [])
-
-    conversation = conversation.lower()
-
-    seniority_keywords = [
-        "entry",
-        "entry-level",
-        "junior",
-        "mid",
-        "mid-level",
-        "senior",
-        "lead",
-        "manager",
-        "director",
-        "intern",
-        "graduate",
-        "experience",
-        "years",
-        "year",
-    ]
-
-    has_seniority = any(
-        word in conversation
-        for word in seniority_keywords
-    )
-
-    # No useful information
+    job_level = intent.get("job_level")
+    
+    # No useful information at all
     if not skills and not assessment_types:
         return True
-
-    # We know the technology but not the seniority
-    if skills and not has_seniority:
+    
+    # We have skills but no job level
+    if skills and job_level is None:
         return True
-
+    
     return False
+
+
+def has_unknown_level_phrase(conversation):
+    """
+    Check if the user explicitly says they don't know or have no preference.
+    
+    Fix 2: Detects phrases that indicate the user wants to skip clarification.
+    """
+    conversation_lower = conversation.lower()
+    
+    unknown_phrases = [
+        "not sure",
+        "don't know",
+        "do not know",
+        "any level",
+        "show me some options",
+        "no preference",
+        "i'm not sure",
+        "not certain",
+        "doesn't matter",
+        "does not matter",
+        "whatever",
+        "either",
+        "all levels",
+        "any level is fine",
+    ]
+    
+    return any(
+        phrase in conversation_lower
+        for phrase in unknown_phrases
+    )
 
 
 def build_reply(intent, recommendations):
@@ -168,7 +178,6 @@ def get_test_type(assessment):
 
 def is_comparison_query(query: str):
     q = query.lower()
-
     return (
         "compare" in q
         or "difference" in q
@@ -179,7 +188,6 @@ def is_comparison_query(query: str):
 
 def is_out_of_scope(query: str):
     q = query.lower()
-
     blocked = [
         "salary",
         "investment",
@@ -190,7 +198,6 @@ def is_out_of_scope(query: str):
         "medical advice",
         "legal advice",
     ]
-
     return any(word in q for word in blocked)
 
 
@@ -240,8 +247,6 @@ def chat(request: ChatRequest):
         # --------------------------------------------------
         # Comparison
         # --------------------------------------------------
-        import re
-
         if is_comparison_query(conversation):
             names = re.split(
                 r"\b(?:vs|versus|compare|and)\b",
@@ -298,19 +303,29 @@ Adaptive: {b.get("adaptive")}
             }
 
         # --------------------------------------------------
-        # Intent
+        # Intent Parsing
         # --------------------------------------------------
-        intent = parser.parse(
-            conversation
-        )
+        intent = parser.parse(conversation)
+
+        # Debug output
+        print("=" * 60)
+        print("Conversation:")
+        print(conversation)
+        print()
+        print("Intent:")
+        print(intent)
+        print("=" * 60)
 
         # --------------------------------------------------
-        # Clarification
+        # Clarification - with Fix 2 applied
         # --------------------------------------------------
         if needs_clarification(intent, conversation):
             skills = intent.get("skills", [])
-            job_levels = intent.get("job_levels", [])
-
+            job_level = intent.get("job_level")
+            
+            # Check if user said they're not sure or have no preference
+            unknown_level = has_unknown_level_phrase(conversation)
+            
             if not skills:
                 reply = (
                     "I'd be happy to help. "
@@ -318,20 +333,36 @@ Adaptive: {b.get("adaptive")}
                     "required for this role? "
                     "(For example: Java, Python, SQL, AWS, React.)"
                 )
-
-            elif not job_levels:
-                reply = (
-                    "Thanks! Before I recommend assessments, "
-                    "what is the seniority level for this role? "
-                    "(Entry, Mid, or Senior)"
-                )
-
-            else:
-                reply = (
-                    "Could you also specify whether you're looking for "
-                    "technical, personality, leadership, or cognitive assessments?"
-                )
-
+                return {
+                    "reply": reply,
+                    "recommendations": [],
+                    "end_of_conversation": False,
+                }
+            
+            # We have skills but no job level
+            if skills and job_level is None:
+                # Fix 2: Skip clarification if user says they're not sure
+                if unknown_level:
+                    # Continue without asking for job level
+                    pass
+                else:
+                    # Ask for job level clarification
+                    reply = (
+                        "Thanks! Before I recommend assessments, "
+                        "what is the seniority level for this role? "
+                        "(Entry, Mid, or Senior)"
+                    )
+                    return {
+                        "reply": reply,
+                        "recommendations": [],
+                        "end_of_conversation": False,
+                    }
+            
+            # If we reach here, we have other missing information
+            reply = (
+                "Could you also specify whether you're looking for "
+                "technical, personality, leadership, or cognitive assessments?"
+            )
             return {
                 "reply": reply,
                 "recommendations": [],
@@ -367,7 +398,6 @@ Adaptive: {b.get("adaptive")}
                 "name": assessment.get("name"),
                 "url": assessment.get("url"),
                 "test_type": get_test_type(assessment),
-                # ---------- optional debugging ----------
                 "category": assessment.get("category", []),
                 "duration": assessment.get("duration_minutes"),
                 "reason": explainer.explain(
