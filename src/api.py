@@ -106,7 +106,9 @@ def merge_intents(previous_intent, current_intent):
         merged["skills"] = list(set(prev_skills + curr_skills))
     
     # Merge job_level (prioritize current if present, otherwise keep previous)
-    if current_intent.get("job_level") is None and previous_intent.get("job_level"):
+    if current_intent.get("job_level") is not None:
+        merged["job_level"] = current_intent["job_level"]
+    elif previous_intent.get("job_level"):
         merged["job_level"] = previous_intent["job_level"]
     
     # Merge domains
@@ -121,12 +123,14 @@ def merge_intents(previous_intent, current_intent):
     if prev_assessment_types or curr_assessment_types:
         merged["assessment_types"] = list(set(prev_assessment_types + curr_assessment_types))
     
-    # Merge role_context (prioritize current if present, otherwise keep previous)
-    if current_intent.get("role_context") is None and previous_intent.get("role_context"):
+    # Merge role_context
+    if current_intent.get("role_context") is not None:
+        merged["role_context"] = current_intent["role_context"]
+    elif previous_intent.get("role_context"):
         merged["role_context"] = previous_intent["role_context"]
     
     # Merge has_skills_or_domain
-    if previous_intent.get("has_skills_or_domain"):
+    if current_intent.get("has_skills_or_domain") or previous_intent.get("has_skills_or_domain"):
         merged["has_skills_or_domain"] = True
     
     # Merge experience
@@ -423,6 +427,7 @@ def is_comparison_query(query: str):
     return (
         "compare" in q
         or "difference" in q
+        or "difference between" in q
         or "vs" in q
         or "versus" in q
     )
@@ -529,27 +534,43 @@ def chat(request: ChatRequest):
         # Comparison
         # --------------------------------------------------
         if is_comparison_query(conversation):
-            names = re.split(
-                r"\b(?:vs|versus|compare|and)\b",
-                latest_query,
-                flags=re.IGNORECASE,
-            )
-
-            names = [
-                n.strip()
-                for n in names
-                if len(n.strip()) > 2
-            ]
-
+            query_lower = latest_query.lower()
+            
+            names = []
+            
+            # Handle "difference between X and Y" pattern
+            if "difference between" in query_lower:
+                parts = query_lower.split("difference between")[1].split("and")
+                names = [p.strip() for p in parts if p.strip()]
+            else:
+                # Handle "vs", "versus", "compare" patterns
+                names = re.split(
+                    r"\b(?:vs|versus|compare|and)\b",
+                    latest_query,
+                    flags=re.IGNORECASE,
+                )
+                names = [n.strip() for n in names if len(n.strip()) > 2]
+            
+            # Handle abbreviations like OPQ, GSA
+            expanded_names = []
+            abbreviation_map = {
+                "opq": "Occupational Personality Questionnaire OPQ32r",
+                "gsa": "Global Skills Assessment",
+            }
+            
+            for name in names:
+                name_lower = name.lower()
+                if name_lower in abbreviation_map:
+                    expanded_names.append(abbreviation_map[name_lower])
+                else:
+                    expanded_names.append(name)
+            
+            names = expanded_names
+            
             if len(names) >= 2:
-                a = retriever.get_assessment_by_name(
-                    names[0]
-                )
-
-                b = retriever.get_assessment_by_name(
-                    names[1]
-                )
-
+                a = retriever.get_assessment_by_name(names[0])
+                b = retriever.get_assessment_by_name(names[1])
+                
                 if a and b:
                     level_a = get_assessment_level(a)
                     level_b = get_assessment_level(b)
@@ -583,7 +604,7 @@ Level: {level_b if level_b else "Not specified"}
                     }
 
             return {
-                "reply": "Please specify the two SHL assessments you want to compare.",
+                "reply": "Please specify the two SHL assessments you want to compare. For example: 'Compare OPQ and GSA' or 'What is the difference between Core Java Entry and Advanced?'",
                 "recommendations": [],
                 "end_of_conversation": False,
             }
@@ -605,7 +626,6 @@ Level: {level_b if level_b else "Not specified"}
         if len(user_messages) > 1:
             # Build previous context (excluding the last user message)
             previous_context = "\n".join([m.content for m in user_messages[:-1]])
-            # Truncate previous context too
             previous_context = truncate_query(previous_context, max_length=500)
             previous_intent = parser.parse(previous_context)
             
