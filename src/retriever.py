@@ -26,11 +26,11 @@ class HybridRetriever:
         # --------------------------------------------------
         self.catalog = self.load_catalog(catalog_path)
         
-        # Filter out Job Solutions (only keep Individual Test Solutions)
+        # Filter out Job Solutions
         self.catalog = self.filter_job_solutions(self.catalog)
 
         self.catalog_lookup = {
-            assessment["entity_id"]: assessment
+            assessment.get("entity_id", assessment.get("assessment_id", "")): assessment
             for assessment in self.catalog
         }
 
@@ -70,58 +70,22 @@ class HybridRetriever:
             return json.load(f)
     
     def filter_job_solutions(self, catalog):
-        """
-        Filter out Pre-packaged Job Solutions.
-        Only keep Individual Test Solutions.
-        """
         filtered = []
         
         for item in catalog:
             name = item.get("name", "").lower()
             description = item.get("description", "").lower()
-            category = " ".join(item.get("keys", [])).lower()
+            keys = " ".join(item.get("keys", [])).lower()
             
-            # Keywords that indicate a Job Solution
-            job_solution_keywords = [
-                "job solution",
-                "pre-packaged",
-                "solution",
-                "bundle",
-                "package"
-            ]
+            job_keywords = ["job solution", "pre-packaged", "bundle", "package"]
             
-            # Check if it's a Job Solution
-            is_job_solution = False
-            
-            # Check name
-            for keyword in job_solution_keywords:
-                if keyword in name:
-                    is_job_solution = True
+            is_job = False
+            for kw in job_keywords:
+                if kw in name or kw in description or kw in keys:
+                    is_job = True
                     break
             
-            # Check description
-            if not is_job_solution:
-                for keyword in job_solution_keywords:
-                    if keyword in description:
-                        is_job_solution = True
-                        break
-            
-            # Check category
-            if not is_job_solution:
-                for keyword in job_solution_keywords:
-                    if keyword in category:
-                        is_job_solution = True
-                        break
-            
-            # Check if it has a job_levels field (Individual Tests have this)
-            if not is_job_solution and "job_levels" not in item:
-                # Some Individual Tests might not have job_levels
-                # Check if it has test_type or is clearly an individual test
-                if "keys" in item:
-                    filtered.append(item)
-                elif "duration" in item and "remote" in item:
-                    filtered.append(item)
-            elif not is_job_solution:
+            if not is_job:
                 filtered.append(item)
         
         print(f"Filtered out Job Solutions. Kept {len(filtered)} Individual Test Solutions.")
@@ -140,30 +104,24 @@ class HybridRetriever:
         
         name_lower = name.lower().strip()
         
-        # Handle abbreviations and common variations
+        # Handle abbreviations
         abbreviation_map = {
             "opq": "Occupational Personality Questionnaire OPQ32r",
+            "opq32r": "Occupational Personality Questionnaire OPQ32r",
             "gsa": "Global Skills Assessment",
+            "mq": "Motivation Questionnaire MQM5",
+            "dsi": "Dependability and Safety Instrument (DSI)",
         }
         
-        # If it's an abbreviation, map to full name
+        # Try abbreviation match first
         if name_lower in abbreviation_map:
-            name_to_match = abbreviation_map[name_lower].lower()
-        else:
-            name_to_match = name_lower
+            full_name = abbreviation_map[name_lower]
+            for assessment in self.catalog:
+                assessment_name = assessment.get("name", "").lower()
+                if full_name.lower() in assessment_name or assessment_name in full_name.lower():
+                    return assessment
         
-        # First try: exact match or partial match on mapped name
-        for assessment in self.catalog:
-            assessment_name = assessment.get("name", "").lower()
-            
-            if name_to_match == assessment_name:
-                return assessment
-            if name_to_match in assessment_name:
-                return assessment
-            if assessment_name in name_to_match:
-                return assessment
-        
-        # Second try: original name
+        # Try partial match
         for assessment in self.catalog:
             assessment_name = assessment.get("name", "").lower()
             
@@ -188,7 +146,7 @@ class HybridRetriever:
         for assessment in self.catalog:
             text = f"""
             {assessment.get("name","")}
-            {' '.join(assessment.get("job_levels",[]))}
+            {' '.join(assessment.get("job_levels", []))}
             {assessment.get("description","")}
             """
 
@@ -277,19 +235,16 @@ class HybridRetriever:
 
         expanded = set()
 
-        for metadata_node in self.graph.neighbors(
-            assessment_id
-        ):
-            for node in self.graph.neighbors(
-                metadata_node
-            ):
-                if node == assessment_id:
-                    continue
-
-                if node not in self.catalog_lookup:
-                    continue
-
-                expanded.add(node)
+        try:
+            for metadata_node in self.graph.neighbors(assessment_id):
+                for node in self.graph.neighbors(metadata_node):
+                    if node == assessment_id:
+                        continue
+                    if node not in self.catalog_lookup:
+                        continue
+                    expanded.add(node)
+        except:
+            pass
 
         return list(expanded)
 
@@ -313,8 +268,6 @@ class HybridRetriever:
             top_k * 10,
             100,
         )
-
-        # Limit candidate size to catalog size
         candidate_size = min(candidate_size, len(self.catalog))
 
         # --------------------------------------------------
@@ -348,67 +301,46 @@ class HybridRetriever:
             ).lower()
 
             matched = []
-
             boost = 0.0
 
-            for skill in intent.get(
-                "skills",
-                [],
-            ):
+            for skill in intent.get("skills", []):
                 if skill.lower() in text:
                     matched.append(skill)
                     boost += 1.5
 
-            categories = " ".join(
-                assessment.get(
-                    "keys",
-                    [],
-                )
-            ).lower()
+            keys = " ".join(assessment.get("keys", [])).lower()
 
-            for domain in intent.get(
-                "domains",
-                [],
-            ):
-                if domain.lower() in categories:
+            for domain in intent.get("domains", []):
+                if domain.lower() in keys:
                     boost += 0.5
 
-            levels = " ".join(
-                assessment.get(
-                    "job_levels",
-                    [],
-                )
-            ).lower()
+            levels = " ".join(assessment.get("job_levels", [])).lower()
 
             if (
                 intent.get("job_level")
-                and intent["job_level"].lower()
-                in levels
+                and intent["job_level"].lower() in levels
             ):
                 boost += 0.5
 
             assessment["matched_skills"] = matched
+            item["score"] += boost
 
-            item["score"] += boost        # --------------------------------------------------
+        # --------------------------------------------------
         # Graph Expansion
         # --------------------------------------------------
         graph_results = []
-
         visited = set()
 
         for result in semantic + keyword + metadata:
-            aid = result["assessment"][
-                "entity_id"
-            ]
+            aid = result["assessment"].get("entity_id", result["assessment"].get("assessment_id", ""))
+            if not aid:
+                continue
 
             for neighbor in self.graph_expand(aid):
                 if neighbor in visited:
                     continue
 
-                assessment = self.catalog_lookup.get(
-                    neighbor
-                )
-
+                assessment = self.catalog_lookup.get(neighbor)
                 if assessment is None:
                     continue
 
@@ -448,9 +380,6 @@ class HybridRetriever:
 
             retrieval_score = result.get("score", 0.0)
 
-            # ----------------------------
-            # Skill Boost
-            # ----------------------------
             matched_skills = []
 
             for skill in intent.get("skills", []):
@@ -460,23 +389,13 @@ class HybridRetriever:
 
             assessment["matched_skills"] = matched_skills
 
-            # ----------------------------
-            # Domain Boost
-            # ----------------------------
-            categories = " ".join(
-                assessment.get("keys", [])
-            ).lower()
+            keys = " ".join(assessment.get("keys", [])).lower()
 
             for domain in intent.get("domains", []):
-                if domain.lower() in categories:
+                if domain.lower() in keys:
                     retrieval_score += 0.5
 
-            # ----------------------------
-            # Job Level Boost
-            # ----------------------------
-            levels = " ".join(
-                assessment.get("job_levels", [])
-            ).lower()
+            levels = " ".join(assessment.get("job_levels", [])).lower()
 
             if (
                 intent.get("job_level")
@@ -484,9 +403,6 @@ class HybridRetriever:
             ):
                 retrieval_score += 0.5
 
-            # ----------------------------
-            # Adaptive / Remote Boost
-            # ----------------------------
             if (
                 intent.get("adaptive")
                 and assessment.get("adaptive") == "yes"
@@ -502,7 +418,7 @@ class HybridRetriever:
             result["retrieval_score"] = retrieval_score
 
         # --------------------------------------------------
-        # Sort using boosted retrieval score
+        # Sort
         # --------------------------------------------------
         results.sort(
             key=lambda x: x["retrieval_score"],
@@ -516,12 +432,8 @@ class HybridRetriever:
 
         for result in results:
             assessment = result["assessment"]
+            duration_str = assessment.get("duration", "")
 
-            duration_str = assessment.get(
-                "duration"
-            )
-
-            # Extract minutes from duration string if present
             duration_minutes = None
             if duration_str:
                 import re
@@ -547,6 +459,6 @@ class HybridRetriever:
         )
 
         # --------------------------------------------------
-        # Return top_k results
+        # Return top_k
         # --------------------------------------------------
         return filtered[:top_k]
