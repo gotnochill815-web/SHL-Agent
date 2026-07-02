@@ -87,8 +87,6 @@ def needs_clarification(intent, conversation):
     """
     Decide whether enough information is available
     to recommend assessments.
-    
-    Fix 1: Uses parser output instead of searching raw conversation.
     """
     skills = intent.get("skills", [])
     assessment_types = intent.get("assessment_types", [])
@@ -108,8 +106,6 @@ def needs_clarification(intent, conversation):
 def has_unknown_level_phrase(conversation):
     """
     Check if the user explicitly says they don't know or have no preference.
-    
-    Fix 2: Detects phrases that indicate the user wants to skip clarification.
     """
     conversation_lower = conversation.lower()
     
@@ -144,8 +140,21 @@ def build_reply(intent, recommendations):
         )
 
     skills = intent.get("skills", [])
+    job_level = intent.get("job_level")
 
-    if skills:
+    if skills and job_level:
+        level_display = {
+            "entry": "Entry-level",
+            "mid": "Mid-level", 
+            "senior": "Senior-level"
+        }.get(job_level, job_level.capitalize())
+        
+        return (
+            f"I found {len(recommendations)} SHL assessments "
+            f"that best match a {level_display} role requiring "
+            f"{', '.join(skills)}."
+        )
+    elif skills:
         return (
             f"I found {len(recommendations)} SHL assessments "
             f"that best match a role requiring "
@@ -170,6 +179,28 @@ def get_test_type(assessment):
         return "S"
 
     return "K"
+
+
+def get_assessment_level(assessment):
+    """
+    Extract the actual level from the assessment name or metadata.
+    Returns None if no level can be determined.
+    """
+    name = assessment.get("name", "").lower()
+    
+    if "entry" in name or "junior" in name or "beginner" in name:
+        return "Entry"
+    elif "advanced" in name or "senior" in name or "expert" in name:
+        return "Senior"
+    elif "mid" in name or "intermediate" in name:
+        return "Mid"
+    
+    # Check metadata if available
+    level = assessment.get("level")
+    if level:
+        return level.capitalize()
+    
+    return None
 
 
 # ============================================================
@@ -199,6 +230,29 @@ def is_out_of_scope(query: str):
         "legal advice",
     ]
     return any(word in q for word in blocked)
+
+
+def normalize_job_level(level: str):
+    """
+    Normalize various job level descriptions to standard values.
+    """
+    if not level:
+        return None
+    
+    level_lower = level.lower()
+    
+    entry_keywords = ["entry", "junior", "beginner", "fresher", "graduate"]
+    mid_keywords = ["mid", "intermediate", "medium", "regular"]
+    senior_keywords = ["senior", "advanced", "expert", "lead", "principal", "staff"]
+    
+    if any(kw in level_lower for kw in entry_keywords):
+        return "entry"
+    elif any(kw in level_lower for kw in mid_keywords):
+        return "mid"
+    elif any(kw in level_lower for kw in senior_keywords):
+        return "senior"
+    
+    return None
 
 
 # ============================================================
@@ -270,6 +324,9 @@ def chat(request: ChatRequest):
                 )
 
                 if a and b:
+                    level_a = get_assessment_level(a)
+                    level_b = get_assessment_level(b)
+                    
                     comparison = f"""
 SHL Assessment Comparison
 
@@ -280,6 +337,7 @@ Category: {", ".join(a.get("category", []))}
 Duration: {a.get("duration_minutes")} minutes
 Remote Testing: {a.get("remote")}
 Adaptive: {a.get("adaptive")}
+Level: {level_a if level_a else "Not specified"}
 
 Assessment 2
 -------------
@@ -288,6 +346,7 @@ Category: {", ".join(b.get("category", []))}
 Duration: {b.get("duration_minutes")} minutes
 Remote Testing: {b.get("remote")}
 Adaptive: {b.get("adaptive")}
+Level: {level_b if level_b else "Not specified"}
 """
 
                     return {
@@ -306,6 +365,11 @@ Adaptive: {b.get("adaptive")}
         # Intent Parsing
         # --------------------------------------------------
         intent = parser.parse(conversation)
+        
+        # Normalize job level if present
+        raw_level = intent.get("job_level")
+        if raw_level:
+            intent["job_level"] = normalize_job_level(raw_level)
 
         # Debug output
         print("=" * 60)
@@ -317,7 +381,7 @@ Adaptive: {b.get("adaptive")}
         print("=" * 60)
 
         # --------------------------------------------------
-        # Clarification - with Fix 2 applied
+        # Clarification
         # --------------------------------------------------
         if needs_clarification(intent, conversation):
             skills = intent.get("skills", [])
@@ -341,22 +405,27 @@ Adaptive: {b.get("adaptive")}
             
             # We have skills but no job level
             if skills and job_level is None:
-                # Fix 2: Skip clarification if user says they're not sure
                 if unknown_level:
-                    # Continue without asking for job level
-                    pass
-                else:
-                    # Ask for job level clarification
-                    reply = (
-                        "Thanks! Before I recommend assessments, "
-                        "what is the seniority level for this role? "
-                        "(Entry, Mid, or Senior)"
-                    )
                     return {
-                        "reply": reply,
+                        "reply": (
+                            "No problem. The seniority level helps me recommend the "
+                            "most appropriate assessments. If you're unsure, you can "
+                            "tell me the approximate years of experience or simply "
+                            "choose Entry, Mid, or Senior."
+                        ),
                         "recommendations": [],
                         "end_of_conversation": False,
                     }
+                
+                return {
+                    "reply": (
+                        "Thanks! Before I recommend assessments, "
+                        "what is the seniority level for this role? "
+                        "(Entry, Mid, or Senior)"
+                    ),
+                    "recommendations": [],
+                    "end_of_conversation": False,
+                }
             
             # If we reach here, we have other missing information
             reply = (
@@ -393,6 +462,22 @@ Adaptive: {b.get("adaptive")}
 
         for item in ranked:
             assessment = item["assessment"]
+            
+            # Get the actual assessment level
+            assessment_level = get_assessment_level(assessment)
+            
+            # Get reasons with correct level
+            reasons = explainer.explain(
+                assessment,
+                intent,
+                item.get("source", "rrf"),
+            )
+            
+            # Override the level in reasons if assessment has a known level
+            if assessment_level:
+                # Remove any existing "Suitable for X candidates" reason
+                reasons = [r for r in reasons if not r.startswith("Suitable for")]
+                reasons.append(f"Suitable for {assessment_level} candidates")
 
             recommendations.append({
                 "name": assessment.get("name"),
@@ -400,11 +485,7 @@ Adaptive: {b.get("adaptive")}
                 "test_type": get_test_type(assessment),
                 "category": assessment.get("category", []),
                 "duration": assessment.get("duration_minutes"),
-                "reason": explainer.explain(
-                    assessment,
-                    intent,
-                    item.get("source", "rrf"),
-                ),
+                "reason": reasons,
             })
 
         # --------------------------------------------------
