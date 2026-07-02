@@ -2,92 +2,85 @@
 
 ## Overview
 
-This project is an AI-powered conversational recommendation system that recommends the most suitable SHL assessments based on natural language hiring requirements.
+This project is a conversational SHL Assessment Recommendation API that recommends the most suitable SHL assessments from natural language hiring requirements.
 
-Unlike traditional keyword search, the system combines semantic retrieval, sparse retrieval, knowledge graph expansion, business-rule reasoning, and cross-encoder reranking to produce high-quality recommendations while supporting conversational interactions.
+The system combines hybrid retrieval, semantic search, neural reranking, and conversational clarification to recommend grounded SHL assessments while supporting multi-turn interactions.
 
-The system is deployed using FastAPI and exposed through ngrok for real-time inference.
+The API is built with **FastAPI** and deployed on **Railway**.
+
+---
+
+# Features
+
+- Conversational recommendation engine
+- Clarification questions for incomplete hiring requirements
+- Multi-turn conversation support
+- Recommendation refinement using conversation history
+- Assessment comparison
+- Out-of-scope request handling
+- Hybrid Retrieval (BM25 + Dense Retrieval)
+- FAISS semantic search
+- Reciprocal Rank Fusion (RRF)
+- Cross-Encoder reranking
+- Explainable recommendations
+- FastAPI REST API
+- Railway deployment
 
 ---
 
 # Motivation
 
-Recruiters often describe hiring requirements in natural language rather than using structured filters. Translating those requirements into relevant assessments requires understanding skills, domains, seniority, assessment types, and conversational context.
+Recruiters typically describe hiring requirements in natural language rather than structured filters.
 
-This project addresses that challenge using a hybrid retrieval pipeline that combines multiple retrieval strategies with neural reranking.
+For example,
 
----
+> Senior Java Spring developer with AWS experience.
 
-# Relation to My Previous Projects
+must be translated into relevant SHL assessments.
 
-This project builds directly upon techniques I explored in my previous AI and retrieval research projects.
-
-### Hybrid Retrieval
-
-Previously, I implemented hybrid retrieval systems combining dense embeddings with lexical retrieval for scientific and molecular datasets. The same retrieval principles are applied here by combining:
-
-- FAISS semantic retrieval
-- BM25 keyword retrieval
-- Metadata retrieval
-- Knowledge Graph expansion
-
-instead of relying on a single search technique.
+This project addresses that challenge through a hybrid retrieval pipeline that combines lexical search, semantic retrieval, metadata filtering, and neural reranking.
 
 ---
 
-### Knowledge Graph Reasoning
+# Relation to Previous Projects
 
-In my earlier Drug Repurposing and Molecular AI projects, I used graph-based representations to propagate information across related biological entities.
+This work extends techniques developed in my previous AI and retrieval projects.
 
-This project adopts a similar idea by constructing an Assessment Knowledge Graph where assessments are connected through shared metadata such as:
+## Hybrid Retrieval
 
-- Skills
-- Categories
-- Job Levels
-- Assessment Types
+Previously, I developed hybrid retrieval systems combining lexical and semantic retrieval for scientific and molecular datasets.
 
-Graph expansion allows discovery of relevant assessments that are not retrieved directly by semantic search.
+The same principles are applied here through:
+
+- BM25 sparse retrieval
+- FAISS dense retrieval
+- Metadata filtering
 
 ---
 
-### Neural Re-ranking
+## Neural Re-ranking
 
-During previous work with Cross Encoders and retrieval pipelines, I experimented with reranking retrieved candidates using transformer models.
+In previous retrieval systems I explored transformer-based reranking to improve search quality.
 
-The same architecture is used here:
+The same architecture is adopted here:
 
+```
 Candidate Retrieval
-↓
-
+        │
+        ▼
 Cross Encoder
-
-↓
-
+        │
+        ▼
 Final Ranking
+```
 
-which significantly improves recommendation quality over embedding similarity alone.
-
----
-
-### Business Rule Integration
-
-Many recommendation systems optimize only semantic similarity.
-
-Inspired by ranking pipelines used in production recommendation systems, this project additionally incorporates business-aware ranking signals including:
-
-- Exact skill matching
-- Assessment title matching
-- Domain relevance
-- Job level compatibility
-- Assessment metadata
-
-These signals improve ranking quality while keeping recommendations interpretable.
+Cross-Encoder reranking improves recommendation quality beyond embedding similarity alone.
 
 ---
 
-### Conversational AI
+## Conversational AI
 
-Unlike my previous retrieval systems that processed single queries, this project extends retrieval into a conversational recommendation agent capable of:
+Unlike earlier retrieval projects that processed single queries, this system supports:
 
 - Clarification questions
 - Multi-turn conversations
@@ -95,57 +88,44 @@ Unlike my previous retrieval systems that processed single queries, this project
 - Assessment comparison
 - Out-of-scope detection
 
-making the system significantly closer to a production conversational assistant.
+making the system closer to a production conversational assistant.
 
 ---
 
 # System Architecture
 
-User Query
-        │
-        ▼
-Intent Parser
-        │
-        ▼
-Hybrid Retrieval
- ├── Semantic Search (FAISS)
- ├── BM25
- ├── Metadata Retrieval
- └── Knowledge Graph Expansion
-        │
-        ▼
-Business Rule Ranking
-        │
-        ▼
-Cross Encoder Re-ranking
-        │
-        ▼
-Recommendation Generator
-        │
-        ▼
-FastAPI REST API
-        │
-        ▼
-Conversational Response
-
----
-
-# Features
-
-- Conversational recommendation engine
-- Hybrid Retrieval
-- FAISS semantic search
-- BM25 sparse retrieval
-- Metadata retrieval
-- Knowledge Graph expansion
-- Cross Encoder reranking
-- Business rule ranking
-- Clarification handling
-- Recommendation refinement
-- Assessment comparison
-- Out-of-scope detection
-- FastAPI deployment
-- ngrok deployment
+```
+                 User Query
+                      │
+                      ▼
+               Intent Parser
+                      │
+                      ▼
+            Structured Intent
+                      │
+                      ▼
+         Hybrid Candidate Retrieval
+          ┌───────────────────────┐
+          │ BM25                  │
+          │ FAISS Dense Retrieval │
+          │ Metadata Retrieval    │
+          └───────────────────────┘
+                      │
+                      ▼
+        Reciprocal Rank Fusion (RRF)
+                      │
+                      ▼
+          Cross-Encoder Re-ranking
+                      │
+                      ▼
+        Recommendation Explainer
+                      │
+                      ▼
+             FastAPI REST API
+                      │
+                      ▼
+              Conversational Response
+```
 
 ---
 
@@ -157,29 +137,53 @@ Conversational Response
 - Cross Encoder
 - FAISS
 - Rank-BM25
-- NetworkX
 - NumPy
+- NetworkX
 - Pydantic
 
 ---
 
 # Evaluation
 
-| Metric | Score |
-|---------|------:|
-| Precision@5 | 0.25 |
-| Recall@5 | 0.7917 |
-| Hit Rate | 1.000 |
-| MRR | 0.875 |
-| NDCG@5 | 0.7881 |
+The retrieval pipeline was evaluated using representative hiring scenarios covering Java, Python, SQL, and Docker roles.
 
-These results demonstrate that the hybrid retrieval and reranking pipeline consistently retrieves relevant SHL assessments while ranking the most appropriate recommendations at the top.
+| Metric | Score |
+|--------|------:|
+| Precision@5 | **0.2500** |
+| Recall@5 | **0.7917** |
+| Hit Rate | **1.0000** |
+| MRR | **0.8750** |
+| NDCG@5 | **0.7881** |
+
+These results demonstrate that the hybrid retrieval pipeline consistently retrieves relevant SHL assessments while ranking the most appropriate recommendations near the top of the result list.
 
 ---
 
 # API
 
-## POST /chat
+## Health Check
+
+```
+GET /health
+```
+
+Response
+
+```json
+{
+  "status": "ok"
+}
+```
+
+---
+
+## Recommendation API
+
+```
+POST /chat
+```
+
+Request
 
 ```json
 {
@@ -197,12 +201,17 @@ Response
 
 ```json
 {
-  "reply": "...",
+  "reply": "I found 5 SHL assessments...",
   "recommendations": [
     {
       "name": "Python (New)",
-      "url": "...",
-      "test_type": "K"
+      "url": "https://www.shl.com/...",
+      "test_type": "K",
+      "duration": 11,
+      "reason": [
+        "Matched skills: python",
+        "Recommended by hybrid retrieval"
+      ]
     }
   ],
   "end_of_conversation": true
@@ -211,31 +220,19 @@ Response
 
 ---
 
-## GET /health
-
-Returns the server status.
-
----
-
 # Deployment
 
-The system is deployed using:
+**Production API**
 
-- FastAPI
-- Uvicorn
-- ngrok
+https://shl-agent-production-2bdb.up.railway.app
 
-allowing external access for evaluation and demonstration.
+**Health Endpoint**
 
----
+https://shl-agent-production-2bdb.up.railway.app/health
 
-# Future Improvements
+**Swagger Documentation**
 
-- Learning-to-Rank models
-- Personalized recruiter preferences
-- LLM-based query rewriting
-- Better assessment comparison
-- Feedback-driven ranking optimization
+https://shl-agent-production-2bdb.up.railway.app/docs
 
 ---
 
@@ -243,22 +240,34 @@ allowing external access for evaluation and demonstration.
 
 ```
 src/
-    api.py
-    retriever.py
-    reranker.py
-    parser.py
-    explainer.py
-    memory.py
+│── api.py
+│── parser.py
+│── retriever.py
+│── reranker.py
+│── explainer.py
+│── fusion.py
 
 data/
 graph/
 embeddings/
 evaluation/
+
 README.md
+requirements.txt
 ```
+
+---
+
+# Future Improvements
+
+- Learning-to-Rank models
+- Better behavioral competency extraction
+- LLM-assisted intent extraction
+- Feedback-driven ranking optimization
+- Personalized recruiter preferences
 
 ---
 
 # Acknowledgements
 
-Built as part of the SHL Generative AI Assessment Recommendation Challenge.
+Developed as part of the **SHL Generative AI Assessment Recommendation Challenge**.
