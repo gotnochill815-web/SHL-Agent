@@ -1,0 +1,994 @@
+[
+  {
+    "assessment_id": "A4302",
+    "entity_id": "4302",
+    "name": "Global Skills Development Report",
+    "category": [
+      "Ability & Aptitude",
+      "Assessment Exercises",
+      "Biodata & Situational Judgment",
+      "Competencies",
+      "Development & 360",
+      "Personality & Behavior"
+    ],
+    "description": "This report is designed to be given to individuals who have completed the Global Skills Assessment (GSA). With coverage across the Great 8 Domains, this measure of self-reported behaviors offers a complete overview of their current skills. Participants receive actionable tips on leveraging their top skill strengths and how they might develop their growth skills.",
+    "duration_minutes": null,
+    "job_levels": [
+      "Director",
+      "Entry-Level",
+      "Executive",
+      "General Population",
+      "Graduate",
+      "Manager",
+      "Mid-Professional",
+      "Front Line Manager",
+      "Supervisor"
+    ],
+    "languages": [],
+    "remote": true,
+    "adaptive": false,
+    "url": "https://www.shl.com/products/product-catalog/view/global-skills-development-report/",
+    "skills": [],
+    "competencies": [],
+    "roles": [],
+    "domains": [
+      "Great 8 Domains"
+    ],
+    "programming_languages": [],
+    "prerequisite_skills": [],
+    "assessment_type": "Self-report, Development Report",
+    "difficulty": "",
+    "confidence": 0.9,
+    "tags": [
+      "Ability & Aptitude",
+      "Assessment Exercises",
+      "Biodata & Situational Judgment",
+      "Competencies",
+      "Development & 360",
+      "Personality & Behavior",
+      "Skills Development",
+      "GSA"
+    ]
+  },
+  {
+    "assessment_id": "A3827",
+    "entity_id": "3827",
+    "name": ".NET Framework 4.5",
+    "category": [
+      "Knowledge & Skills"
+    ],
+    "description": "The.NET Framework 4.5 test measures knowledge of .NET environment. Designed for experienced users, this test covers the following topics: Application Development, Application Foundation, Data Modeling, Deployment, Diagnostics, Performance, Portability, and Security.",
+    "duration_minutes": 30,
+    "job_levels": [
+      "Professional Individual Contributor",
+      "Mid-Professional"
+    ],
+    "languages": [
+      "English (USA)"
+    ],
+    "remote": true,
+    "adaptive": true,
+    "url": "https://www.shl.com/products/product-catalog/view/net-framework-4-5/",
+    "skills": [
+      "Application Development",
+      "Application Foundation",
+      "Data Modeling",
+      "Deployment",
+      "Diagnostics",
+      "Performance",
+      "Portability",
+      "Security"
+    ],
+    "competencies": [],
+    "roles": [],
+    "domains": [
+      ".NET environment",
+      ".NET Framework 4.5"
+    ],
+    "programming_languages": [],
+    "prerequisite_skills": [],
+    "assessment_type": "Knowledge & Skills Test",
+    "difficulty": "Experienced",
+    "confidence": 0.95,
+    "tags": [
+      ".NET Framework 4.5",
+      ".NET",
+      "Software Development",
+      "Technical Assessment",
+      "Application Development",
+      "Data Modeling",
+      "Security",
+      "Deployment",
+      "Diagnostics",
+      "Performance"
+    ]
+  },
+  {
+    "assessment_id": "A4094",
+    "entity_id": "4094",
+    "name": ".NET MVC (New)",
+    "category": [
+      "Knowledge & Skills"
+    ],
+    "description": "Multi-choice test that measures the knowledge of Model-View-Controller (MVC) architecture, validation, security, routing, and areas.",
+    "duration_minutes": 17,
+    "job_levels": [
+      "Mid-Professional",
+      "Professional Individual Contributor"
+    ],
+    "languages": [
+      "English (USA)"
+    ],
+    "remote": true,
+    "adaptive": false,
+    "url": "https://www.shl.com/products/product-catalog/view/net-mvc-new/",
+    "skills": [
+      "MVC Architecture",
+      "Validation",
+      "Security",
+      "Routing",
+      "Areas"
+    ],
+    "competencies": [],
+    "roles": [],
+    "domains": [
+      "Web Development",
+      ".NET Development"
+    ],
+    "programming_languages": [
+      "C#"
+    ],
+    "prerequisite_skills": [],
+    "assessment_type": "Multiple Choice Test",
+    "difficulty": "",
+    "confidence": 0.9,
+    "tags": [
+      "ASP.NET MVC",
+      ".NET",
+      "MVC",
+      "Web Development",
+      "Multiple Choice",
+      "Knowledge"
+    ]
+  },
+  {
+    "assessment_id": "A4099",
+    "entity_id": "4099",
+    "name": ".NET MVVM (New)",
+    "category": [
+      "Knowledge & Skills"
+    ],
+    "description": "Multi-choice test that measures the knowledge of MVVM pattern, scenarios, data validation, ViewModel communication and Quick-start.",
+    "duration_minutes": 5,
+    "job_levels": [
+      "Mid-Professional",
+      "Professional Individual Contributor"
+    ],
+    "languages": [
+      "English (USA)"
+    ],
+    "remote": true,
+    "adaptive": false,
+    "url": "https://www.shl.com/products/product-catalog/view/net-mvvm-new/",
+    "skills": [
+      "MVVM Pattern Knowledge",
+      "MVVM Scenario Application",
+      "Data Validation",
+      "ViewModel Communication",
+      "MVVM Quick-start"
+    ],
+    "competencies": [
+      "Technical Knowledge",
+      "Application of Technical Knowledge"
+    ],
+    "roles": [],
+    "domains": [
+      "Software Development",
+      "Front-end Development",
+      "Software Design Patterns"
+    ],
+    "programming_languages": [
+      "C#"
+    ],
+    "prerequisite_skills": [],
+    "assessment_type": "Multi-choice test",
+    "difficulty": "",
+    "confidence": 0.9,
+    "tags": [
+      "MVVM",
+      ".NET",
+      "Design Pattern",
+      "Knowledge Assessment",
+      "Front-end"
+    ]
+  },
+  {
+    "assessment_id": "A4018",
+    "entity_id": "4018",
+    "name": ".NET WCF (New)",
+    "category": [
+      "Knowledge & Skills"
+    ],
+    "description": "Multi-choice test that measures the knowledge of .NET fundamentals, WCF architecture, programming model, SOA, managing and programming WCF.",
+    "duration_minutes": 11,
+    "job_levels": [
+      "Mid-Professional",
+      "Professional Individual Contributor"
+    ],
+    "languages": [
+      "English (USA)"
+    ],
+    "remote": true,
+    "adaptive": false,
+    "url": "https://www.shl.com/products/product-catalog/view/net-wcf-new/",
+    "skills": [
+      ".NET fundamentals",
+      "WCF architecture",
+      "WCF programming model",
+      "Service-Oriented Architecture (SOA) knowledge",
+      "WCF management",
+      "WCF programming"
+    ],
+    "competencies": [],
+    "roles": [],
+    "domains": [
+      ".NET",
+      "WCF",
+      "Service-Oriented Architecture"
+    ],
+    "programming_languages": [],
+    "prerequisite_skills": [],
+    "assessment_type": "Multi-choice test",
+    "difficulty": "",
+    "confidence": 0.9,
+    "tags": [
+      ".NET",
+      "WCF",
+      "SOA",
+      "Knowledge",
+      "Skills",
+      "Programming",
+      "Architecture",
+      "Fundamentals",
+      "Management"
+    ]
+  },
+  {
+    "assessment_id": "A4165",
+    "entity_id": "4165",
+    "name": ".NET XAML (New)",
+    "category": [
+      "Knowledge & Skills"
+    ],
+    "description": "Multi-choice test that measures the knowledge of XAML triggers, data binding, custom controls and layouts.",
+    "duration_minutes": 5,
+    "job_levels": [
+      "Mid-Professional",
+      "Professional Individual Contributor"
+    ],
+    "languages": [
+      "English (USA)"
+    ],
+    "remote": true,
+    "adaptive": false,
+    "url": "https://www.shl.com/products/product-catalog/view/net-xaml-new/",
+    "skills": [
+      "XAML triggers",
+      "Data binding",
+      "Custom controls",
+      "Layouts"
+    ],
+    "competencies": [],
+    "roles": [],
+    "domains": [
+      "UI Development"
+    ],
+    "programming_languages": [
+      "XAML"
+    ],
+    "prerequisite_skills": [],
+    "assessment_type": "Multi-choice test",
+    "difficulty": "",
+    "confidence": 0.7,
+    "tags": [
+      ".NET",
+      "XAML",
+      "UI",
+      "Markup Language",
+      "Triggers",
+      "Data Binding",
+      "Custom Controls",
+      "Layouts",
+      "New"
+    ]
+  },
+  {
+    "assessment_id": "A4178",
+    "entity_id": "4178",
+    "name": "Accounts Payable (New)",
+    "category": [
+      "Knowledge & Skills"
+    ],
+    "description": "Multiple-choice test that measures the knowledge of processing payables and vendor invoices, and the posting of journal entries.",
+    "duration_minutes": 9,
+    "job_levels": [
+      "Entry-Level",
+      "Graduate",
+      "Mid-Professional",
+      "Professional Individual Contributor"
+    ],
+    "languages": [
+      "English (USA)"
+    ],
+    "remote": true,
+    "adaptive": false,
+    "url": "https://www.shl.com/products/product-catalog/view/accounts-payable-new/",
+    "skills": [
+      "processing payables",
+      "processing vendor invoices",
+      "posting journal entries"
+    ],
+    "competencies": [
+      "Financial Record Keeping",
+      "General Ledger Management"
+    ],
+    "roles": [
+      "Accounts Payable Specialist",
+      "Accounts Payable Clerk"
+    ],
+    "domains": [
+      "Accounting",
+      "Finance"
+    ],
+    "programming_languages": [],
+    "prerequisite_skills": [],
+    "assessment_type": "Multiple-choice test",
+    "difficulty": "",
+    "confidence": 1.0,
+    "tags": [
+      "Accounts Payable",
+      "Accounting",
+      "Finance",
+      "Bookkeeping",
+      "Journal Entries",
+      "Vendor Invoices",
+      "Payables Processing",
+      "Financial Transaction Processing"
+    ]
+  },
+  {
+    "assessment_id": "A4187",
+    "entity_id": "4187",
+    "name": "Accounts Payable Simulation (New)",
+    "category": [
+      "Simulations"
+    ],
+    "description": "Simulated data entry test that measures the ability to process payables and vendor invoices.",
+    "duration_minutes": 8,
+    "job_levels": [
+      "Entry-Level",
+      "Graduate",
+      "Mid-Professional",
+      "Professional Individual Contributor"
+    ],
+    "languages": [
+      "English (USA)"
+    ],
+    "remote": true,
+    "adaptive": false,
+    "url": "https://www.shl.com/products/product-catalog/view/accounts-payable-simulation-new/",
+    "skills": [
+      "Data Entry",
+      "Invoice Processing",
+      "Accounts Payable Processing",
+      "Numerical Data Entry",
+      "Financial Data Processing"
+    ],
+    "competencies": [
+      "Attention to Detail",
+      "Accuracy",
+      "Data Accuracy",
+      "Information Processing",
+      "Numerical Reasoning"
+    ],
+    "roles": [
+      "Accounts Payable Clerk",
+      "Data Entry Clerk",
+      "Accounts Payable Specialist",
+      "Financial Clerk"
+    ],
+    "domains": [
+      "Finance",
+      "Accounting"
+    ],
+    "programming_languages": [],
+    "prerequisite_skills": [],
+    "assessment_type": "Simulation",
+    "difficulty": "",
+    "confidence": 0.9,
+    "tags": [
+      "accounts payable",
+      "data entry",
+      "invoicing",
+      "financial processing",
+      "simulation",
+      "accounting",
+      "finance"
+    ]
+  },
+  {
+    "assessment_id": "A4179",
+    "entity_id": "4179",
+    "name": "Accounts Receivable (New)",
+    "category": [
+      "Knowledge & Skills"
+    ],
+    "description": "Multiple-choice test that measures the knowledge of processing receivables and invoices.",
+    "duration_minutes": 13,
+    "job_levels": [
+      "Entry-Level",
+      "Graduate",
+      "Mid-Professional",
+      "Professional Individual Contributor"
+    ],
+    "languages": [
+      "English (USA)"
+    ],
+    "remote": true,
+    "adaptive": false,
+    "url": "https://www.shl.com/products/product-catalog/view/accounts-receivable-new/",
+    "skills": [
+      "processing receivables",
+      "processing invoices"
+    ],
+    "competencies": [],
+    "roles": [
+      "Accounts Receivable Specialist"
+    ],
+    "domains": [
+      "Accounting",
+      "Finance",
+      "Accounts Receivable"
+    ],
+    "programming_languages": [],
+    "prerequisite_skills": [],
+    "assessment_type": "Multiple-choice test",
+    "difficulty": "",
+    "confidence": 0.9,
+    "tags": [
+      "Knowledge & Skills",
+      "Accounts Receivable",
+      "receivables",
+      "invoices",
+      "financial knowledge",
+      "accounting knowledge"
+    ]
+  },
+  {
+    "assessment_id": "A4188",
+    "entity_id": "4188",
+    "name": "Accounts Receivable Simulation (New)",
+    "category": [
+      "Simulations"
+    ],
+    "description": "Simulated data entry test that measures the ability to process receivables and invoices.",
+    "duration_minutes": 8,
+    "job_levels": [
+      "Entry-Level",
+      "Graduate",
+      "Mid-Professional",
+      "Professional Individual Contributor"
+    ],
+    "languages": [
+      "English (USA)"
+    ],
+    "remote": true,
+    "adaptive": false,
+    "url": "https://www.shl.com/products/product-catalog/view/accounts-receivable-simulation-new/",
+    "skills": [
+      "Data Entry",
+      "Processing Receivables",
+      "Processing Invoices"
+    ],
+    "competencies": [
+      "Accounts Receivable Management",
+      "Financial Transaction Processing",
+      "Accuracy"
+    ],
+    "roles": [
+      "Accounts Receivable Clerk",
+      "Accounts Receivable Specialist",
+      "Bookkeeper"
+    ],
+    "domains": [
+      "Finance",
+      "Accounting"
+    ],
+    "programming_languages": [],
+    "prerequisite_skills": [],
+    "assessment_type": "Simulation",
+    "difficulty": "",
+    "confidence": 0.9,
+    "tags": [
+      "Data Entry",
+      "Accounts Receivable",
+      "Invoicing",
+      "Financial Processing"
+    ]
+  },
+  {
+    "assessment_id": "A4004",
+    "entity_id": "4004",
+    "name": "Aerospace Engineering (New)",
+    "category": [
+      "Knowledge & Skills"
+    ],
+    "description": "Multi-choice test that measures the conceptual knowledge of aerodynamics, aircraft systems and instrumentation, flight dynamics, space dynamics and avionics.",
+    "duration_minutes": 10,
+    "job_levels": [
+      "Graduate",
+      "Mid-Professional",
+      "Professional Individual Contributor"
+    ],
+    "languages": [
+      "English (USA)"
+    ],
+    "remote": true,
+    "adaptive": false,
+    "url": "https://www.shl.com/products/product-catalog/view/aerospace-engineering-new/",
+    "skills": [
+      "Aerodynamics Knowledge",
+      "Aircraft Systems Knowledge",
+      "Aircraft Instrumentation Knowledge",
+      "Flight Dynamics Knowledge",
+      "Space Dynamics Knowledge",
+      "Avionics Knowledge"
+    ],
+    "competencies": [
+      "Conceptual Understanding",
+      "Technical Knowledge",
+      "Domain Expertise"
+    ],
+    "roles": [
+      "Aerospace Engineer"
+    ],
+    "domains": [
+      "Aerospace Engineering",
+      "Aerodynamics",
+      "Aircraft Systems",
+      "Flight Dynamics",
+      "Space Dynamics",
+      "Avionics"
+    ],
+    "programming_languages": [],
+    "prerequisite_skills": [],
+    "assessment_type": "Knowledge Test",
+    "difficulty": "",
+    "confidence": 1.0,
+    "tags": [
+      "Multiple Choice",
+      "Conceptual",
+      "Knowledge Assessment"
+    ]
+  },
+  {
+    "assessment_id": "A4223",
+    "entity_id": "4223",
+    "name": "Agile Software Development",
+    "category": [
+      "Knowledge & Skills"
+    ],
+    "description": "Multi-choice test that measures the knowledge of agile methodology, scrum, feature driven software development, incremental and iterative development and processes involved in agile software development.",
+    "duration_minutes": 7,
+    "job_levels": [
+      "Graduate"
+    ],
+    "languages": [
+      "English (USA)"
+    ],
+    "remote": true,
+    "adaptive": false,
+    "url": "https://www.shl.com/products/product-catalog/view/agile-software-development/",
+    "skills": [
+      "Agile Methodology",
+      "Scrum",
+      "Feature Driven Development",
+      "Incremental Development",
+      "Iterative Development",
+      "Agile Software Development Processes"
+    ],
+    "competencies": [
+      "Knowledge of Agile Methodologies",
+      "Understanding of Scrum Framework",
+      "Understanding of Software Development Processes"
+    ],
+    "roles": [
+      "Software Developer",
+      "Scrum Master",
+      "Product Owner",
+      "Agile Coach"
+    ],
+    "domains": [
+      "Software Development",
+      "Agile Methodologies"
+    ],
+    "programming_languages": [],
+    "prerequisite_skills": [],
+    "assessment_type": "Multi-choice test",
+    "difficulty": "",
+    "confidence": 0.95,
+    "tags": [
+      "Agile",
+      "Scrum",
+      "Feature Driven Development",
+      "Incremental Development",
+      "Iterative Development",
+      "Software Development",
+      "Knowledge Assessment"
+    ]
+  },
+  {
+    "assessment_id": "A4159",
+    "entity_id": "4159",
+    "name": "Agile Testing (New)",
+    "category": [
+      "Knowledge & Skills"
+    ],
+    "description": "Multi-choice test that measures the knowledge of tools, techniques and processes involved in the Agile testing methodology.",
+    "duration_minutes": 13,
+    "job_levels": [
+      "Mid-Professional",
+      "Professional Individual Contributor"
+    ],
+    "languages": [
+      "English (USA)"
+    ],
+    "remote": true,
+    "adaptive": false,
+    "url": "https://www.shl.com/products/product-catalog/view/agile-testing-new/",
+    "skills": [
+      "Agile Testing",
+      "Testing Tools",
+      "Testing Techniques",
+      "Testing Processes"
+    ],
+    "competencies": [
+      "Agile Testing Methodology Knowledge"
+    ],
+    "roles": [],
+    "domains": [
+      "Agile Testing",
+      "Software Testing"
+    ],
+    "programming_languages": [],
+    "prerequisite_skills": [],
+    "assessment_type": "Multi-choice test",
+    "difficulty": "",
+    "confidence": 0.9,
+    "tags": [
+      "Agile",
+      "Testing",
+      "Methodology",
+      "Knowledge",
+      "Skills",
+      "Multi-choice"
+    ]
+  },
+  {
+    "assessment_id": "A4311",
+    "entity_id": "4311",
+    "name": "AI Skills",
+    "category": [
+      "Personality & Behavior"
+    ],
+    "description": "The AI Skills assessment measures the skills that help candidates successfully leverage AI in their work.",
+    "duration_minutes": 16,
+    "job_levels": [
+      "General Population"
+    ],
+    "languages": [
+      "English (USA)"
+    ],
+    "remote": true,
+    "adaptive": false,
+    "url": "https://www.shl.com/products/product-catalog/view/ai-skills/",
+    "skills": [
+      "AI application skills",
+      "AI usage skills",
+      "AI literacy"
+    ],
+    "competencies": [
+      "Leveraging AI",
+      "Adaptability",
+      "Problem Solving",
+      "Learning Agility",
+      "Technological Fluency"
+    ],
+    "roles": [],
+    "domains": [
+      "Artificial Intelligence",
+      "Technology"
+    ],
+    "programming_languages": [],
+    "prerequisite_skills": [],
+    "assessment_type": "Behavioral Skill Assessment",
+    "difficulty": "",
+    "confidence": 0.9,
+    "tags": [
+      "AI",
+      "Artificial Intelligence",
+      "Skills",
+      "Leveraging AI",
+      "Behavioral",
+      "Personality"
+    ]
+  },
+  {
+    "assessment_id": "A4028",
+    "entity_id": "4028",
+    "name": "Amazon Web Services (AWS) Development (New)",
+    "category": [
+      "Knowledge & Skills"
+    ],
+    "description": "Multi-choice test that measures the knowledge of AWS delivery process, monitoring, metrics, logging, security, validation and scalability.",
+    "duration_minutes": 6,
+    "job_levels": [
+      "Mid-Professional",
+      "Professional Individual Contributor"
+    ],
+    "languages": [
+      "English (USA)"
+    ],
+    "remote": true,
+    "adaptive": false,
+    "url": "https://www.shl.com/products/product-catalog/view/amazon-web-services-aws-development-new/",
+    "skills": [
+      "AWS Delivery Process",
+      "AWS Monitoring",
+      "AWS Metrics",
+      "AWS Logging",
+      "AWS Security",
+      "AWS Validation",
+      "AWS Scalability"
+    ],
+    "competencies": [
+      "AWS Knowledge",
+      "Cloud Development",
+      "Cloud Operations",
+      "Technical Proficiency"
+    ],
+    "roles": [
+      "AWS Developer",
+      "Cloud Developer",
+      "Cloud Engineer",
+      "DevOps Engineer"
+    ],
+    "domains": [
+      "Amazon Web Services (AWS)",
+      "Cloud Computing",
+      "Software Development"
+    ],
+    "programming_languages": [],
+    "prerequisite_skills": [],
+    "assessment_type": "Multi-choice test",
+    "difficulty": "",
+    "confidence": 0.9,
+    "tags": [
+      "AWS",
+      "Cloud",
+      "Development",
+      "Monitoring",
+      "Logging",
+      "Security",
+      "Scalability",
+      "Knowledge Test",
+      "Multi-choice"
+    ]
+  },
+  {
+    "assessment_id": "A4160",
+    "entity_id": "4160",
+    "name": "Android Development (New)",
+    "category": [
+      "Knowledge & Skills"
+    ],
+    "description": "Multi-choice test that measures the knowledge of UI components for an Android device, services and alerts, animation and media apps, application components, security and testing.",
+    "duration_minutes": 7,
+    "job_levels": [
+      "Mid-Professional",
+      "Professional Individual Contributor"
+    ],
+    "languages": [
+      "English (USA)"
+    ],
+    "remote": true,
+    "adaptive": false,
+    "url": "https://www.shl.com/products/product-catalog/view/android-development-new/",
+    "skills": [
+      "Android UI Components",
+      "Android Services",
+      "Android Alerts",
+      "Android Animation",
+      "Android Media Apps",
+      "Android Application Components",
+      "Android Security",
+      "Android Testing"
+    ],
+    "competencies": [
+      "Android Platform Knowledge"
+    ],
+    "roles": [
+      "Android Developer"
+    ],
+    "domains": [
+      "Android Development",
+      "Mobile Development"
+    ],
+    "programming_languages": [],
+    "prerequisite_skills": [],
+    "assessment_type": "Multi-choice test",
+    "difficulty": "",
+    "confidence": 0.9,
+    "tags": [
+      "Android",
+      "Mobile Development",
+      "Knowledge Assessment",
+      "Skills Assessment",
+      "UI Components",
+      "Services",
+      "Alerts",
+      "Animation",
+      "Media Apps",
+      "Application Components",
+      "Security",
+      "Testing",
+      "Multi-choice"
+    ]
+  },
+  {
+    "assessment_id": "A4153",
+    "entity_id": "4153",
+    "name": "Angular 6 (New)",
+    "category": [
+      "Knowledge & Skills"
+    ],
+    "description": "Multi-choice test that measures the knowledge of the basic components and modules of Angular 6 and concepts like data binding, dependency injection, CRUD with HTTP, typescript, routing and navigation.",
+    "duration_minutes": 11,
+    "job_levels": [
+      "Mid-Professional",
+      "Professional Individual Contributor"
+    ],
+    "languages": [
+      "English (USA)"
+    ],
+    "remote": true,
+    "adaptive": false,
+    "url": "https://www.shl.com/products/product-catalog/view/angular-6-new/",
+    "skills": [
+      "Angular 6",
+      "Data Binding",
+      "Dependency Injection",
+      "CRUD Operations",
+      "HTTP Communication",
+      "Typescript",
+      "Routing",
+      "Navigation"
+    ],
+    "competencies": [],
+    "roles": [],
+    "domains": [
+      "Web Development",
+      "Front-end Development"
+    ],
+    "programming_languages": [
+      "Typescript"
+    ],
+    "prerequisite_skills": [],
+    "assessment_type": "Multiple Choice Test",
+    "difficulty": "Basic",
+    "confidence": 0.9,
+    "tags": [
+      "Angular 6",
+      "Front-end",
+      "Web Development",
+      "Typescript",
+      "Data Binding",
+      "Dependency Injection",
+      "CRUD",
+      "HTTP",
+      "Routing",
+      "Navigation",
+      "Knowledge Assessment"
+    ]
+  },
+  {
+    "assessment_id": "A4021",
+    "entity_id": "4021",
+    "name": "AngularJS (New)",
+    "category": [
+      "Knowledge & Skills"
+    ],
+    "description": "Multi-choice test that measures the knowledge of AngularJS architecture, forms, directives, filters, controllers, routing and testing.",
+    "duration_minutes": 9,
+    "job_levels": [
+      "Mid-Professional",
+      "Professional Individual Contributor"
+    ],
+    "languages": [
+      "English (USA)"
+    ],
+    "remote": true,
+    "adaptive": false,
+    "url": "https://www.shl.com/products/product-catalog/view/angularjs-new/",
+    "skills": [
+      "AngularJS Architecture",
+      "AngularJS Forms",
+      "AngularJS Directives",
+      "AngularJS Filters",
+      "AngularJS Controllers",
+      "AngularJS Routing",
+      "AngularJS Testing"
+    ],
+    "competencies": [
+      "Technical Knowledge"
+    ],
+    "roles": [],
+    "domains": [
+      "Web Development"
+    ],
+    "programming_languages": [
+      "JavaScript"
+    ],
+    "prerequisite_skills": [],
+    "assessment_type": "Multiple Choice",
+    "difficulty": "",
+    "confidence": 0.9,
+    "tags": [
+      "AngularJS",
+      "Front-end Development",
+      "JavaScript Framework"
+    ]
+  },
+  {
+    "assessment_id": "A4030",
+    "entity_id": "4030",
+    "name": "Apache Hadoop (New)",
+    "category": [
+      "Knowledge & Skills"
+    ],
+    "description": "Multi-choice test that measures the knowledge of basic concepts of Hadoop, commands, HDFS and MapReduce.",
+    "duration_minutes": 7,
+    "job_levels": [
+      "Mid-Professional",
+      "Professional Individual Contributor"
+    ],
+    "languages": [
+      "English (USA)"
+    ],
+    "remote": true,
+    "adaptive": false,
+    "url": "https://www.shl.com/products/product-catalog/view/apache-hadoop-new/",
+    "skills": [
+      "Hadoop",
+      "HDFS",
+      "MapReduce"
+    ],
+    "competencies": [],
+    "roles": [],
+    "domains": [
+      "Big Data"
+    ],
+    "programming_languages": [],
+    "prerequisite_skills": [],
+    "assessment_type": "Multi-choice test",
+    "difficulty": "",
+    "confidence": 0.9,
+    "tags": [
+      "Hadoop",
+      "HDFS",
+      "MapReduce",
+      "Big Data Concepts",
+      "Commands"
+    ]
+  }
+]

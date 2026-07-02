@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+*.log
+.env
+.DS_Store
+
+# Python virtual environments
+venv/
+.venv/
+
+# Hugging Face cache
+.cache/

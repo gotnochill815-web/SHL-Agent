@@ -1,0 +1,15 @@
+fastapi
+uvicorn
+sentence-transformers
+transformers
+torch
+faiss-cpu
+numpy
+networkx
+rank-bm25
+scikit-learn
+pandas
+pydantic
+python-multipart
+requests
+pyngrok

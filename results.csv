@@ -1,0 +1,5 @@
+query,precision,recall,hit,predicted,expected
+Need a Python assessment for backend developers around 30 minutes,0.2,1.0,1,"['Python (New)', 'ASP.NET 4.5', 'Automata Front End', 'Java Platform Enterprise Edition 7 (Java EE 7)', 'Informatica (Developer) (New)']",['Python (New)']
+Senior leadership selection benchmark,0.0,0.0,0,"['Enterprise Leadership Report 2.0', 'Enterprise Leadership Report 1.0', 'HiPo Assessment Report 1.0', 'PJM Selection Report', 'HiPo Assessment Report 2.0']","['Occupational Personality Questionnaire OPQ32r', 'OPQ Leadership Report']"
+Senior Rust Engineer,0.0,0.0,0,"['Metallurgical Engineering (New)', 'Mineral Engineering (New)', 'Mining Engineering (New)', 'Fire Engineering (New)', 'Production Engineering (New)']","['Linux Programming (General)', 'Networking and Implementation (New)', 'SHL Verify Interactive G+']"
+Graduate Financial Analyst,0.4,0.6666666666666666,1,"['Financial Accounting (New)', 'Financial and Banking Services (New)', 'Graduate Scenarios', 'Graduate Scenarios Profile Report', 'Graduate Scenarios Narrative Report']","['Financial Accounting (New)', 'Basic Statistics (New)', 'Graduate Scenarios']"

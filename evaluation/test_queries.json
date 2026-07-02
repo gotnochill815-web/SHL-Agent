@@ -1,0 +1,29 @@
+[
+    {
+        "query": "Senior Java Spring developer with AWS",
+        "expected": [
+            "Java Frameworks (New)",
+            "Spring (New)",
+            "Amazon Web Services (AWS) Development (New)"
+        ]
+    },
+    {
+        "query": "Python developer",
+        "expected": [
+            "Python (New)"
+        ]
+    },
+    {
+        "query": "SQL developer",
+        "expected": [
+            "SQL (New)",
+            "SQL Server (New)"
+        ]
+    },
+    {
+        "query": "Docker engineer",
+        "expected": [
+            "Docker (New)"
+        ]
+    }
+]
