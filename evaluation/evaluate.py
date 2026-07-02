@@ -87,7 +87,6 @@ def ndcg(predicted, expected, k):
 # ============================================================
 
 def search(query):
-
     response = requests.post(
         f"{BASE_URL}/chat",
         json={
@@ -105,21 +104,12 @@ def search(query):
 
     result = response.json()
 
-    return [
-        item["name"]
-        for item in result["recommendations"]
-    ]
-
-    response.raise_for_status()
-
-    result = response.json()
-
     print("=" * 80)
     print("QUERY:", query)
     print(json.dumps(result, indent=2))
 
     return [
-        item["assessment_name"]
+        item["name"]
         for item in result["recommendations"]
     ]
 
