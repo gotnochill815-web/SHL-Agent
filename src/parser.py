@@ -1,5 +1,5 @@
 import re
-
+from typing import Dict, Any, List, Optional
 
 class IntentParser:
     def __init__(self):
@@ -143,41 +143,41 @@ class IntentParser:
         ]
 
         # --------------------------------------------------
-        # Job Levels
+        # Job Levels (mapped to standardized values)
         # --------------------------------------------------
         self.job_levels = {
-            "Graduate": [
+            "entry": [
                 "graduate",
                 "entry level",
+                "entry",
                 "fresher",
                 "intern",
                 "internship",
-            ],
-            "Junior": [
                 "junior",
                 "associate",
+                "beginner",
+                "trainee",
             ],
-            "Mid": [
+            "mid": [
                 "mid",
                 "mid level",
+                "intermediate",
+                "medium",
+                "regular",
+                "professional",
             ],
-            "Senior": [
+            "senior": [
                 "senior",
                 "staff",
-            ],
-            "Lead": [
                 "lead",
                 "principal",
-            ],
-            "Manager": [
+                "senior level",
+                "expert",
+                "advanced",
                 "manager",
                 "engineering manager",
-            ],
-            "Director": [
                 "director",
                 "head",
-            ],
-            "Executive": [
                 "executive",
                 "vp",
                 "vice president",
@@ -185,7 +185,7 @@ class IntentParser:
             ],
         }
 
-    def parse(self, query):
+    def parse(self, query: str) -> Dict[str, Any]:
         q = query.lower()
 
         intent = {
@@ -206,7 +206,6 @@ class IntentParser:
         # --------------------------------------------------
         for skill, aliases in self.skills.items():
             for alias in aliases:
-                # Exact word matching
                 pattern = r"\b" + re.escape(alias.lower()) + r"\b"
                 if re.search(pattern, q):
                     intent["skills"].append(skill)
@@ -217,7 +216,6 @@ class IntentParser:
         # --------------------------------------------------
         for domain, aliases in self.domain_dictionary.items():
             for alias in aliases:
-                # Exact word matching
                 pattern = r"\b" + re.escape(alias.lower()) + r"\b"
                 if re.search(pattern, q):
                     intent["domains"].append(domain)
@@ -228,23 +226,20 @@ class IntentParser:
         # --------------------------------------------------
         for assessment_type, aliases in self.assessment_type_dictionary.items():
             for alias in aliases:
-                # Exact word matching
                 pattern = r"\b" + re.escape(alias.lower()) + r"\b"
                 if re.search(pattern, q):
                     intent["assessment_types"].append(assessment_type)
                     break
 
         # --------------------------------------------------
-        # Job Level
+        # Job Level (returns standardized: entry, mid, senior)
         # --------------------------------------------------
         for level, aliases in self.job_levels.items():
             for alias in aliases:
-                # Exact word matching
                 pattern = r"\b" + re.escape(alias.lower()) + r"\b"
                 if re.search(pattern, q):
                     intent["job_level"] = level
                     break
-
             if intent["job_level"] is not None:
                 break
 
@@ -280,16 +275,12 @@ class IntentParser:
         # --------------------------------------------------
         # Remote / Adaptive
         # --------------------------------------------------
-        if any(
-            word in q
-            for word in [
-                "remote",
-                "work from home",
-                "wfh",
-            ]
-        ):
+        remote_keywords = ["remote", "work from home", "wfh"]
+        onsite_keywords = ["onsite", "in office"]
+        
+        if any(word in q for word in remote_keywords):
             intent["remote"] = True
-        elif "onsite" in q:
+        elif any(word in q for word in onsite_keywords):
             intent["remote"] = False
         elif "hybrid" in q:
             intent["remote"] = None
