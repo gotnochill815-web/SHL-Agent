@@ -25,6 +25,9 @@ class HybridRetriever:
         # Catalog
         # --------------------------------------------------
         self.catalog = self.load_catalog(catalog_path)
+        
+        # Filter out Job Solutions (only keep Individual Test Solutions)
+        self.catalog = self.filter_job_solutions(self.catalog)
 
         self.catalog_lookup = {
             assessment["assessment_id"]: assessment
@@ -65,6 +68,66 @@ class HybridRetriever:
     def load_catalog(self, path):
         with open(path) as f:
             return json.load(f)
+    
+    def filter_job_solutions(self, catalog):
+        """
+        Filter out Pre-packaged Job Solutions.
+        Only keep Individual Test Solutions.
+        """
+        filtered = []
+        
+        for item in catalog:
+            name = item.get("name", "").lower()
+            description = item.get("description", "").lower()
+            category = " ".join(item.get("category", [])).lower()
+            
+            # Keywords that indicate a Job Solution
+            job_solution_keywords = [
+                "job solution",
+                "pre-packaged",
+                "job solution",
+                "solution",
+                "bundle",
+                "package"
+            ]
+            
+            # Check if it's a Job Solution
+            is_job_solution = False
+            
+            # Check name
+            for keyword in job_solution_keywords:
+                if keyword in name:
+                    is_job_solution = True
+                    break
+            
+            # Check description
+            if not is_job_solution:
+                for keyword in job_solution_keywords:
+                    if keyword in description:
+                        is_job_solution = True
+                        break
+            
+            # Check category
+            if not is_job_solution:
+                for keyword in job_solution_keywords:
+                    if keyword in category:
+                        is_job_solution = True
+                        break
+            
+            # Check if it has a job_levels field (Individual Tests have this)
+            if not is_job_solution and "job_levels" not in item:
+                # Some Individual Tests might not have job_levels
+                # Check if it has test_type or is clearly an individual test
+                if "test_type" in item or "individual" in category:
+                    filtered.append(item)
+                # If it has duration and remote fields, it's likely an individual test
+                elif "duration_minutes" in item and "remote" in item:
+                    filtered.append(item)
+            elif not is_job_solution:
+                filtered.append(item)
+        
+        print(f"Filtered out Job Solutions. Kept {len(filtered)} Individual Test Solutions.")
+        return filtered
 
     def load_graph(self, path):
         with open(path, "rb") as f:
@@ -74,6 +137,9 @@ class HybridRetriever:
     # Get Assessment by Name
     # ======================================================
     def get_assessment_by_name(self, name):
+        if not name:
+            return None
+        
         name = name.lower().strip()
 
         for assessment in self.catalog:
@@ -124,6 +190,9 @@ class HybridRetriever:
         query,
         top_k=20,
     ):
+        if not query or not query.strip():
+            return []
+        
         embedding = self.model.encode(
             [query],
             normalize_embeddings=True,
@@ -131,13 +200,13 @@ class HybridRetriever:
 
         scores, ids = self.index.search(
             embedding,
-            top_k,
+            min(top_k, len(self.catalog)),
         )
 
         results = []
 
         for score, idx in zip(scores[0], ids[0]):
-            if idx < 0:
+            if idx < 0 or idx >= len(self.catalog):
                 continue
 
             results.append(
@@ -158,6 +227,9 @@ class HybridRetriever:
         query,
         top_k=20,
     ):
+        if not query or not query.strip():
+            return []
+        
         scores = self.bm25.get_scores(
             self.tokenize(query)
         )
@@ -166,7 +238,7 @@ class HybridRetriever:
 
         results = []
 
-        for idx in order[:top_k]:
+        for idx in order[:min(top_k, len(self.catalog))]:
             results.append(
                 {
                     "assessment": self.catalog[idx],
@@ -218,13 +290,16 @@ class HybridRetriever:
         # --------------------------------------------------
         query = self.expander.expand(intent)
 
-        if not query.strip():
+        if not query or not query.strip():
             query = "assessment"
 
         candidate_size = max(
             top_k * 10,
             100,
         )
+
+        # Limit candidate size to catalog size
+        candidate_size = min(candidate_size, len(self.catalog))
 
         # --------------------------------------------------
         # Hybrid Retrieval
@@ -449,4 +524,7 @@ class HybridRetriever:
             filtered,
         )
 
+        # --------------------------------------------------
+        # Return top_k results
+        # --------------------------------------------------
         return filtered[:top_k]
