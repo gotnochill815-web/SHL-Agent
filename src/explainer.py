@@ -16,10 +16,8 @@ class RecommendationExplainer:
 
         matched = []
 
-        # Prefer matched skills produced by RecommendationRules
         if "matched_skills" in assessment:
             matched = assessment["matched_skills"]
-
         else:
             for skill in intent.get("skills", []):
                 if skill.lower() in text:
@@ -40,7 +38,6 @@ class RecommendationExplainer:
         ).lower()
 
         for domain in intent.get("domains", []):
-
             if domain.lower() in categories:
                 reasons.append(
                     f"Relevant for {domain}"
@@ -50,17 +47,21 @@ class RecommendationExplainer:
         # Job Level
         # --------------------------------------------------
 
-        if intent.get("job_level"):
+        job_level = intent.get("job_level")
 
-            levels = " ".join(
-                assessment.get("job_levels", [])
-            ).lower()
+        assessment_levels = [
+            level.lower()
+            for level in assessment.get("job_levels", [])
+        ]
 
-            if intent["job_level"].lower() in levels:
-
-                reasons.append(
-                    f"Suitable for {intent['job_level']} candidates"
-                )
+        if (
+            job_level is not None
+            and assessment_levels
+            and job_level.lower() in assessment_levels
+        ):
+            reasons.append(
+                f"Suitable for {job_level} candidates"
+            )
 
         # --------------------------------------------------
         # Remote
@@ -68,7 +69,7 @@ class RecommendationExplainer:
 
         if (
             intent.get("remote") is True
-            and assessment.get("remote")
+            and assessment.get("remote") is True
         ):
             reasons.append(
                 "Remote testing supported"
@@ -80,7 +81,7 @@ class RecommendationExplainer:
 
         if (
             intent.get("adaptive") is True
-            and assessment.get("adaptive")
+            and assessment.get("adaptive") is True
         ):
             reasons.append(
                 "Adaptive assessment"
