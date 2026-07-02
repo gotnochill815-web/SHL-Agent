@@ -141,6 +141,7 @@ def build_reply(intent, recommendations):
 
     skills = intent.get("skills", [])
     job_level = intent.get("job_level")
+    assessment_types = intent.get("assessment_types", [])
 
     if skills and job_level:
         level_display = {
@@ -149,12 +150,28 @@ def build_reply(intent, recommendations):
             "senior": "Senior-level"
         }.get(job_level, job_level.capitalize())
         
+        if assessment_types:
+            type_text = " and ".join(assessment_types)
+            return (
+                f"I found {len(recommendations)} SHL assessments "
+                f"that best match a {level_display} role requiring "
+                f"{', '.join(skills)} with {type_text} assessments."
+            )
+        
         return (
             f"I found {len(recommendations)} SHL assessments "
             f"that best match a {level_display} role requiring "
             f"{', '.join(skills)}."
         )
     elif skills:
+        if assessment_types:
+            type_text = " and ".join(assessment_types)
+            return (
+                f"I found {len(recommendations)} SHL assessments "
+                f"that best match a role requiring "
+                f"{', '.join(skills)} with {type_text} assessments."
+            )
+        
         return (
             f"I found {len(recommendations)} SHL assessments "
             f"that best match a role requiring "
@@ -204,6 +221,108 @@ def get_assessment_level(assessment):
 
 
 # ============================================================
+# Filter Functions
+# ============================================================
+
+def filter_by_assessment_types(candidates, assessment_types):
+    """
+    Filter candidates by assessment type.
+    """
+    if not assessment_types:
+        return candidates
+    
+    filtered = []
+    for item in candidates:
+        assessment = item if isinstance(item, dict) else item.get("assessment", {})
+        categories = assessment.get("category", [])
+        categories_lower = [c.lower() for c in categories]
+        
+        for atype in assessment_types:
+            atype_lower = atype.lower()
+            if any(atype_lower in cat or cat in atype_lower for cat in categories_lower):
+                filtered.append(item)
+                break
+    
+    # If filtering returns too few results, return all candidates (graceful degradation)
+    if len(filtered) < 3:
+        return candidates
+    
+    return filtered
+
+
+def filter_by_duration(candidates, max_duration):
+    """
+    Filter candidates by maximum duration in minutes.
+    """
+    if not max_duration:
+        return candidates
+    
+    filtered = []
+    for item in candidates:
+        assessment = item if isinstance(item, dict) else item.get("assessment", {})
+        duration = assessment.get("duration_minutes")
+        if duration is not None and duration <= max_duration:
+            filtered.append(item)
+    
+    # If filtering returns too few results, return all candidates (graceful degradation)
+    if len(filtered) < 3:
+        return candidates
+    
+    return filtered
+
+
+def filter_by_remote(candidates, remote_preference):
+    """
+    Filter candidates by remote testing preference.
+    remote_preference: True (remote), False (onsite), None (no preference)
+    """
+    if remote_preference is None:
+        return candidates
+    
+    filtered = []
+    for item in candidates:
+        assessment = item if isinstance(item, dict) else item.get("assessment", {})
+        remote = assessment.get("remote")
+        if remote == remote_preference:
+            filtered.append(item)
+    
+    # If filtering returns too few results, return all candidates (graceful degradation)
+    if len(filtered) < 3:
+        return candidates
+    
+    return filtered
+
+
+def filter_by_adaptive(candidates, adaptive_preference):
+    """
+    Filter candidates by adaptive preference.
+    adaptive_preference: True (adaptive), False (non-adaptive), None (no preference)
+    """
+    if adaptive_preference is None:
+        return candidates
+    
+    filtered = []
+    for item in candidates:
+        assessment = item if isinstance(item, dict) else item.get("assessment", {})
+        adaptive = assessment.get("adaptive")
+        if adaptive == adaptive_preference:
+            filtered.append(item)
+    
+    # If filtering returns too few results, return all candidates (graceful degradation)
+    if len(filtered) < 3:
+        return candidates
+    
+    return filtered
+
+
+def is_turn_limit_reached(messages, max_turns=8):
+    """
+    Check if the conversation has reached the turn limit.
+    """
+    return len(messages) >= max_turns
+
+
+# ============================================================
 # Comparison Helpers
 # ============================================================
 
@@ -228,6 +347,10 @@ def is_out_of_scope(query: str):
         "politics",
         "medical advice",
         "legal advice",
+        "general hiring advice",
+        "resume tips",
+        "interview tips",
+        "career advice",
     ]
     return any(word in q for word in blocked)
 
@@ -274,6 +397,16 @@ def health():
 def chat(request: ChatRequest):
     try:
         # --------------------------------------------------
+        # Turn Limit Check
+        # --------------------------------------------------
+        if is_turn_limit_reached(request.messages, max_turns=8):
+            return {
+                "reply": "I've reached the maximum number of turns for this conversation. Please start a new conversation or provide all requirements upfront.",
+                "recommendations": [],
+                "end_of_conversation": True,
+            }
+
+        # --------------------------------------------------
         # Conversation Context
         # --------------------------------------------------
         conversation = build_context(
@@ -292,7 +425,9 @@ def chat(request: ChatRequest):
                 "reply": (
                     "Sorry, I can only answer questions related to "
                     "SHL assessments and recommend assessments from "
-                    "the SHL catalog."
+                    "the SHL catalog. I cannot provide advice on "
+                    "salary, hiring, legal, medical, financial, "
+                    "or career-related matters."
                 ),
                 "recommendations": [],
                 "end_of_conversation": True,
@@ -445,6 +580,34 @@ Level: {level_b if level_b else "Not specified"}
             intent,
             top_k=50,
         )
+
+        # --------------------------------------------------
+        # Apply Filters
+        # --------------------------------------------------
+        
+        # Filter by assessment type (e.g., "personality", "cognitive")
+        assessment_types = intent.get("assessment_types", [])
+        if assessment_types:
+            candidates = filter_by_assessment_types(candidates, assessment_types)
+            print(f"Filtered by assessment types: {assessment_types}, remaining: {len(candidates)}")
+        
+        # Filter by duration (e.g., "under 20 minutes")
+        duration = intent.get("duration")
+        if duration:
+            candidates = filter_by_duration(candidates, duration)
+            print(f"Filtered by duration: {duration} minutes, remaining: {len(candidates)}")
+        
+        # Filter by remote preference
+        remote = intent.get("remote")
+        if remote is not None:
+            candidates = filter_by_remote(candidates, remote)
+            print(f"Filtered by remote: {remote}, remaining: {len(candidates)}")
+        
+        # Filter by adaptive preference
+        adaptive = intent.get("adaptive")
+        if adaptive is not None:
+            candidates = filter_by_adaptive(candidates, adaptive)
+            print(f"Filtered by adaptive: {adaptive}, remaining: {len(candidates)}")
 
         # --------------------------------------------------
         # Cross Encoder
