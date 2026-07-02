@@ -30,6 +30,36 @@ class RecommendationExplainer:
             )
 
         # --------------------------------------------------
+        # Assessment Types
+        # --------------------------------------------------
+        
+        assessment_types = intent.get("assessment_types", [])
+        if assessment_types:
+            categories = " ".join(
+                assessment.get("category", [])
+            ).lower()
+            
+            matched_types = []
+            for atype in assessment_types:
+                atype_lower = atype.lower()
+                # Check if assessment type appears in categories
+                if atype_lower in categories:
+                    matched_types.append(atype)
+                # Also check for related terms
+                elif atype_lower == "cognitive" and ("aptitude" in categories or "reasoning" in categories):
+                    matched_types.append(atype)
+                elif atype_lower == "personality" and ("behavior" in categories or "behaviour" in categories):
+                    matched_types.append(atype)
+                elif atype_lower == "technical" and ("knowledge" in categories or "skill" in categories):
+                    matched_types.append(atype)
+            
+            if matched_types:
+                reasons.append(
+                    "Matches assessment type: " +
+                    ", ".join(sorted(set(matched_types)))
+                )
+
+        # --------------------------------------------------
         # Domain
         # --------------------------------------------------
 
@@ -48,20 +78,39 @@ class RecommendationExplainer:
         # --------------------------------------------------
 
         job_level = intent.get("job_level")
-
+        
+        # Get assessment level from name (if not in job_levels field)
         assessment_levels = [
             level.lower()
             for level in assessment.get("job_levels", [])
         ]
+        
+        # If no job_levels field, try to detect from name
+        if not assessment_levels:
+            name = assessment.get("name", "").lower()
+            if "entry" in name or "junior" in name or "beginner" in name:
+                assessment_levels.append("entry")
+            elif "advanced" in name or "senior" in name or "expert" in name:
+                assessment_levels.append("senior")
+            elif "mid" in name or "intermediate" in name:
+                assessment_levels.append("mid")
 
-        if (
-            job_level is not None
-            and assessment_levels
-            and job_level.lower() in assessment_levels
-        ):
-            reasons.append(
-                f"Suitable for {job_level} candidates"
-            )
+        if job_level is not None and assessment_levels:
+            # Check if the intent level matches any assessment level
+            job_level_lower = job_level.lower()
+            if job_level_lower in assessment_levels:
+                level_display = {
+                    "entry": "Entry-level",
+                    "mid": "Mid-level",
+                    "senior": "Senior-level"
+                }.get(job_level_lower, job_level_lower.capitalize())
+                reasons.append(
+                    f"Suitable for {level_display} candidates"
+                )
+        elif assessment_levels and not job_level:
+            # If no job level in intent but assessment has level, don't add anything
+            # (this prevents showing "Mid" by default)
+            pass
 
         # --------------------------------------------------
         # Remote
