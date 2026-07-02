@@ -69,6 +69,16 @@ class ChatRequest(BaseModel):
 # Helper Functions
 # ============================================================
 
+def truncate_query(text: str, max_length: int = 500) -> str:
+    """
+    Truncate long queries to prevent timeout errors.
+    Keeps the first part which contains the most important context.
+    """
+    if len(text) > max_length:
+        return text[:max_length] + "..."
+    return text
+
+
 def build_context(messages: List[Message]):
     return "\n".join(
         message.content
@@ -492,6 +502,9 @@ def chat(request: ChatRequest):
             request.messages
         )
 
+        # Truncate long queries to prevent 502 timeout errors
+        conversation = truncate_query(conversation, max_length=500)
+
         latest_query = latest_user_message(
             request.messages
         )
@@ -592,6 +605,8 @@ Level: {level_b if level_b else "Not specified"}
         if len(user_messages) > 1:
             # Build previous context (excluding the last user message)
             previous_context = "\n".join([m.content for m in user_messages[:-1]])
+            # Truncate previous context too
+            previous_context = truncate_query(previous_context, max_length=500)
             previous_intent = parser.parse(previous_context)
             
             # Normalize previous job level
