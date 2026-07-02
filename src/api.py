@@ -1,7 +1,7 @@
 from typing import List
 
 from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware  
+from fastapi.middleware.cors import CORSMiddleware     
 from pydantic import BaseModel
 
 from src.explainer import RecommendationExplainer
@@ -83,17 +83,55 @@ def latest_user_message(messages):
     return ""
 
 
-def needs_clarification(intent):
-    if len(intent["skills"]) > 0:
-        return False
+def needs_clarification(intent, conversation: str):
+    conversation = conversation.lower()
 
-    if len(intent["domains"]) > 0:
-        return False
+    # -----------------------------
+    # Check whether seniority is mentioned
+    # -----------------------------
+    seniority_keywords = [
+        "intern",
+        "graduate",
+        "entry",
+        "entry-level",
+        "junior",
+        "mid",
+        "mid-level",
+        "senior",
+        "lead",
+        "principal",
+        "manager",
+        "director",
+        "years",
+        "year",
+        "experience",
+    ]
 
-    if len(intent["assessment_types"]) > 0:
-        return False
+    has_seniority = any(
+        word in conversation
+        for word in seniority_keywords
+    )
 
-    return True
+    # -----------------------------
+    # No technical/domain info at all
+    # -----------------------------
+    has_role_information = (
+        len(intent["skills"]) > 0
+        or len(intent["domains"]) > 0
+        or len(intent["assessment_types"]) > 0
+    )
+
+    if not has_role_information:
+        return True
+
+    # -----------------------------
+    # We know the technology but not the level
+    # Ask one clarification.
+    # -----------------------------
+    if not has_seniority:
+        return True
+
+    return False
 
 
 def build_reply(intent, recommendations):
@@ -270,13 +308,12 @@ Adaptive: {b.get('adaptive')}
         # --------------------------------------------------
         # Clarification
         # --------------------------------------------------
-        if needs_clarification(intent):
+        if needs_clarification(intent, conversation):
             return {
                 "reply": (
-                    "Could you tell me more about the role? "
-                    "For example, required skills, seniority, "
-                    "or whether you're looking for technical, "
-                    "personality, or leadership assessments."
+                    "Sure! Before I recommend assessments, "
+                    "what is the seniority level for this role? "
+                    "(Entry, Mid, or Senior)"
                 ),
                 "recommendations": [],
                 "end_of_conversation": False,
