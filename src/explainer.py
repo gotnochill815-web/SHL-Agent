@@ -52,6 +52,12 @@ class RecommendationExplainer:
                     matched_types.append(atype)
                 elif atype_lower == "technical" and ("knowledge" in categories or "skill" in categories):
                     matched_types.append(atype)
+                elif atype_lower == "situational" and ("judgment" in categories or "judgement" in categories or "scenario" in categories):
+                    matched_types.append(atype)
+                elif atype_lower == "numerical" and ("numerical" in categories or "math" in categories or "quantitative" in categories):
+                    matched_types.append(atype)
+                elif atype_lower == "verbal" and ("verbal" in categories or "communication" in categories):
+                    matched_types.append(atype)
             
             if matched_types:
                 reasons.append(
@@ -60,18 +66,53 @@ class RecommendationExplainer:
                 )
 
         # --------------------------------------------------
-        # Domain
+        # Domain / Role Context
         # --------------------------------------------------
 
         categories = " ".join(
             assessment.get("category", [])
         ).lower()
 
+        # Check domains from intent
         for domain in intent.get("domains", []):
             if domain.lower() in categories:
                 reasons.append(
                     f"Relevant for {domain}"
                 )
+
+        # Check role context
+        role_context = intent.get("role_context")
+        if role_context:
+            context_display = {
+                "leadership": "leadership",
+                "sales": "sales",
+                "contact_centre": "customer service",
+                "graduate": "graduate",
+                "admin": "administrative",
+                "plant_operator": "plant operator",
+                "healthcare": "healthcare",
+                "engineer": "engineering"
+            }.get(role_context, role_context)
+            
+            # Check if the assessment is relevant to the role context
+            context_keywords = {
+                "leadership": ["leadership", "executive", "director", "manager", "management"],
+                "sales": ["sales", "selling", "retail", "commercial"],
+                "contact_centre": ["customer service", "contact", "call center", "service"],
+                "graduate": ["graduate", "entry", "junior"],
+                "admin": ["administrative", "office", "clerical", "secretarial"],
+                "plant_operator": ["manufacturing", "industrial", "plant", "safety", "mechanical"],
+                "healthcare": ["healthcare", "medical", "hospital", "clinical"],
+                "engineer": ["engineering", "technical", "developer", "programmer"]
+            }
+            
+            keywords = context_keywords.get(role_context, [])
+            for keyword in keywords:
+                if keyword in categories or keyword in text:
+                    reasons.append(
+                        f"Relevant for {context_display} role"
+                    )
+                    break
 
         # --------------------------------------------------
         # Job Level
