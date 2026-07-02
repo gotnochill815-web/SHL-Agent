@@ -72,7 +72,6 @@ class ChatRequest(BaseModel):
 def truncate_query(text: str, max_length: int = 500) -> str:
     """
     Truncate long queries to prevent timeout errors.
-    Keeps the first part which contains the most important context.
     """
     if len(text) > max_length:
         return text[:max_length] + "..."
@@ -427,7 +426,6 @@ def is_comparison_query(query: str):
     return (
         "compare" in q
         or "difference" in q
-        or "difference between" in q
         or "vs" in q
         or "versus" in q
     )
@@ -540,7 +538,9 @@ def chat(request: ChatRequest):
             
             # Handle "difference between X and Y" pattern
             if "difference between" in query_lower:
-                parts = query_lower.split("difference between")[1].split("and")
+                after_diff = query_lower.split("difference between")[1].strip()
+                # Split by "and" or ","
+                parts = re.split(r'\s+and\s+|\s*,\s*', after_diff)
                 names = [p.strip() for p in parts if p.strip()]
             else:
                 # Handle "vs", "versus", "compare" patterns
@@ -551,15 +551,27 @@ def chat(request: ChatRequest):
                 )
                 names = [n.strip() for n in names if len(n.strip()) > 2]
             
-            # Handle abbreviations like OPQ, GSA
-            expanded_names = []
+            # If still no names, try extracting common abbreviations
+            if len(names) < 2:
+                common_abbreviations = ["OPQ", "GSA", "MQ", "DSI"]
+                found = []
+                for abbr in common_abbreviations:
+                    if abbr.lower() in query_lower:
+                        found.append(abbr)
+                if len(found) >= 2:
+                    names = found
+            
+            # Handle abbreviations
             abbreviation_map = {
                 "opq": "Occupational Personality Questionnaire OPQ32r",
                 "gsa": "Global Skills Assessment",
+                "mq": "Motivation Questionnaire MQM5",
+                "dsi": "Dependability and Safety Instrument (DSI)",
             }
             
+            expanded_names = []
             for name in names:
-                name_lower = name.lower()
+                name_lower = name.lower().strip()
                 if name_lower in abbreviation_map:
                     expanded_names.append(abbreviation_map[name_lower])
                 else:
@@ -624,16 +636,13 @@ Level: {level_b if level_b else "Not specified"}
         # --------------------------------------------------
         user_messages = [m for m in request.messages if m.role.lower() == "user"]
         if len(user_messages) > 1:
-            # Build previous context (excluding the last user message)
             previous_context = "\n".join([m.content for m in user_messages[:-1]])
             previous_context = truncate_query(previous_context, max_length=500)
             previous_intent = parser.parse(previous_context)
             
-            # Normalize previous job level
             if previous_intent.get("job_level"):
                 previous_intent["job_level"] = normalize_job_level(previous_intent["job_level"])
             
-            # Merge intents
             if previous_intent:
                 intent = merge_intents(previous_intent, intent)
 
@@ -657,12 +666,8 @@ Level: {level_b if level_b else "Not specified"}
             domains = intent.get("domains", [])
             languages = intent.get("languages", [])
             
-            # Check if user said they're not sure or have no preference
             unknown_level = has_unknown_level_phrase(conversation)
             
-            # --------------------------------------------------
-            # Special Case: Leadership - ask who it's for
-            # --------------------------------------------------
             if role_context == "leadership" or "leadership" in domains:
                 if not skills and len(domains) <= 1:
                     return {
@@ -671,9 +676,6 @@ Level: {level_b if level_b else "Not specified"}
                         "end_of_conversation": False,
                     }
             
-            # --------------------------------------------------
-            # Special Case: Contact Centre - ask about language
-            # --------------------------------------------------
             if role_context == "contact_centre" or "customer service" in domains:
                 if not languages:
                     return {
@@ -685,15 +687,9 @@ Level: {level_b if level_b else "Not specified"}
                         "end_of_conversation": False,
                     }
             
-            # --------------------------------------------------
-            # No skills, domains, or role context detected
-            # --------------------------------------------------
             if not skills and not has_skills_or_domain and not role_context:
-                # Check if there's any hint of what they're looking for
                 if "leadership" in conversation.lower() or "executive" in conversation.lower():
-                    reply = (
-                        "Happy to help narrow that down. Who is this meant for?"
-                    )
+                    reply = "Happy to help narrow that down. Who is this meant for?"
                 elif "sales" in conversation.lower():
                     reply = (
                         "For a sales organization, I can recommend several solutions. "
@@ -732,9 +728,6 @@ Level: {level_b if level_b else "Not specified"}
                     "end_of_conversation": False,
                 }
             
-            # --------------------------------------------------
-            # We have skills/context but no job level
-            # --------------------------------------------------
             if (skills or has_skills_or_domain or role_context) and job_level is None:
                 if unknown_level:
                     return {
@@ -758,7 +751,6 @@ Level: {level_b if level_b else "Not specified"}
                     "end_of_conversation": False,
                 }
             
-            # If we reach here, we have other missing information
             reply = (
                 "Could you also specify whether you're looking for "
                 "technical, personality, leadership, or cognitive assessments?"
@@ -774,7 +766,7 @@ Level: {level_b if level_b else "Not specified"}
         # --------------------------------------------------
         candidates = retriever.retrieve(
             intent,
-            top_k=50,
+            top_k=30,
         )
 
         # --------------------------------------------------
