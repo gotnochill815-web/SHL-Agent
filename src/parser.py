@@ -20,13 +20,8 @@ class IntentParser:
             "react": ["react", "reactjs", "react.js"],
             "angular": ["angular", "angularjs"],
             "node": ["node", "nodejs", "node.js"],
-            "javascript": [
-                "javascript",
-                "ecmascript"
-            ],
-            "typescript": [
-                "typescript"
-            ],
+            "javascript": ["javascript", "ecmascript"],
+            "typescript": ["typescript"],
             "mongodb": ["mongodb", "mongo"],
             "linux": ["linux", "unix", "ubuntu"],
             "networking": ["network", "networking", "tcp", "udp"],
@@ -46,144 +41,59 @@ class IntentParser:
         # Domain Dictionary
         # --------------------------------------------------
         self.domain_dictionary = {
-            "finance": [
-                "finance",
-                "financial",
-                "accounting",
-                "banking",
-            ],
-            "healthcare": [
-                "healthcare",
-                "medical",
-                "hospital",
-                "hipaa",
-            ],
-            "manufacturing": [
-                "manufacturing",
-                "industrial",
-                "plant",
-                "factory",
-                "chemical",
-            ],
-            "customer service": [
-                "customer service",
-                "contact centre",
-                "contact center",
-                "call center",
-                "call centre",
-            ],
-            "sales": [
-                "sales",
-                "selling",
-                "retail",
-            ],
-            "software": [
-                "software",
-                "developer",
-                "engineer",
-                "programmer",
-                "backend",
-                "frontend",
-                "full stack",
-            ],
+            "finance": ["finance", "financial", "accounting", "banking"],
+            "healthcare": ["healthcare", "medical", "hospital", "hipaa"],
+            "manufacturing": ["manufacturing", "industrial", "plant", "factory", "chemical"],
+            "customer service": ["customer service", "contact centre", "contact center", "call center", "call centre"],
+            "sales": ["sales", "selling", "retail"],
+            "software": ["software", "developer", "engineer", "programmer", "backend", "frontend", "full stack"],
         }
 
         # --------------------------------------------------
         # Assessment Types
         # --------------------------------------------------
         self.assessment_type_dictionary = {
-            "coding": [
-                "coding",
-                "programming",
-                "developer",
-                "software engineer",
-                "backend",
-                "frontend",
-                "full stack",
-            ],
-            "technical": [
-                "technical",
-                "knowledge",
-            ],
-            "personality": [
-                "personality",
-                "opq",
-                "behavior",
-                "behaviour",
-            ],
-            "leadership": [
-                "leadership",
-                "manager",
-                "executive",
-            ],
-            "simulation": [
-                "simulation",
-                "simulator",
-            ],
-            "numerical": [
-                "numerical",
-                "math",
-                "statistics",
-            ],
-            "verbal": [
-                "verbal",
-                "english",
-                "communication",
-            ],
+            "coding": ["coding", "programming", "developer", "software engineer", "backend", "frontend", "full stack"],
+            "technical": ["technical", "knowledge"],
+            "personality": ["personality", "opq", "behavior", "behaviour"],
+            "leadership": ["leadership", "manager", "executive"],
+            "simulation": ["simulation", "simulator"],
+            "numerical": ["numerical", "math", "statistics"],
+            "verbal": ["verbal", "english", "communication"],
+            "cognitive": ["cognitive", "aptitude", "reasoning"],
         }
 
         # --------------------------------------------------
         # Languages
         # --------------------------------------------------
-        self.languages = [
-            "english",
-            "spanish",
-            "french",
-            "german",
-        ]
+        self.languages = ["english", "spanish", "french", "german"]
 
         # --------------------------------------------------
         # Job Levels (mapped to standardized values)
         # --------------------------------------------------
         self.job_levels = {
             "entry": [
-                "graduate",
-                "entry level",
-                "entry",
-                "fresher",
-                "intern",
-                "internship",
-                "junior",
-                "associate",
-                "beginner",
-                "trainee",
+                "graduate", "entry level", "entry", "fresher", "intern", "internship",
+                "junior", "associate", "beginner", "trainee"
             ],
             "mid": [
-                "mid",
-                "mid level",
-                "intermediate",
-                "medium",
-                "regular",
-                "professional",
+                "mid", "mid level", "intermediate", "medium", "regular", "professional"
             ],
             "senior": [
-                "senior",
-                "staff",
-                "lead",
-                "principal",
-                "senior level",
-                "expert",
-                "advanced",
-                "manager",
-                "engineering manager",
-                "director",
-                "head",
-                "executive",
-                "vp",
-                "vice president",
-                "cxo",
+                "senior", "staff", "lead", "principal", "senior level", "expert",
+                "advanced", "manager", "engineering manager", "director", "head",
+                "executive", "vp", "vice president", "cxo"
             ],
         }
+
+        # --------------------------------------------------
+        # Experience to Level Mapping (years of experience -> seniority)
+        # --------------------------------------------------
+        self.experience_to_level = [
+            (0, 2, "entry"),
+            (3, 6, "mid"),
+            (7, 100, "senior")
+        ]
 
     def parse(self, query: str) -> Dict[str, Any]:
         q = query.lower()
@@ -232,7 +142,7 @@ class IntentParser:
                     break
 
         # --------------------------------------------------
-        # Job Level (returns standardized: entry, mid, senior)
+        # Job Level (from explicit mentions)
         # --------------------------------------------------
         for level, aliases in self.job_levels.items():
             for alias in aliases:
@@ -244,26 +154,34 @@ class IntentParser:
                 break
 
         # --------------------------------------------------
-        # Experience
+        # Experience (extract years of experience)
         # --------------------------------------------------
-        years = re.search(
+        years_match = re.search(
             r"(\d+)\s*(?:\+)?\s*(?:years?|yrs?|year|yr)",
             q,
         )
 
-        if years:
-            intent["experience"] = int(years.group(1))
+        if years_match:
+            intent["experience"] = int(years_match.group(1))
+            
+            # If no job level explicitly mentioned, derive from experience
+            if intent["job_level"] is None and intent["experience"] is not None:
+                exp = intent["experience"]
+                for low, high, level in self.experience_to_level:
+                    if low <= exp <= high:
+                        intent["job_level"] = level
+                        break
 
         # --------------------------------------------------
-        # Duration
+        # Duration (extract maximum duration in minutes)
         # --------------------------------------------------
-        duration = re.search(
+        duration_match = re.search(
             r"(?:under|less than)?\s*(\d+)\s*(?:minutes?|mins?|min)",
             q,
         )
 
-        if duration:
-            intent["duration"] = int(duration.group(1))
+        if duration_match:
+            intent["duration"] = int(duration_match.group(1))
 
         # --------------------------------------------------
         # Languages
