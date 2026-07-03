@@ -564,6 +564,7 @@ def chat(request: ChatRequest):
             # Handle abbreviations
             abbreviation_map = {
                 "opq": "Occupational Personality Questionnaire OPQ32r",
+                "opq32r": "Occupational Personality Questionnaire OPQ32r",
                 "gsa": "Global Skills Assessment",
                 "mq": "Motivation Questionnaire MQM5",
                 "dsi": "Dependability and Safety Instrument (DSI)",
