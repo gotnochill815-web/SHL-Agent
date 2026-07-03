@@ -8,7 +8,7 @@ from pathlib import Path
 
 BASE_URL = "https://gathering-hamper-reviving.ngrok-free.dev"
 
-TOP_K = 5
+TOP_K = 10
 
 TEST_FILE = Path("evaluation/test_queries.json")
 
