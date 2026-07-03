@@ -87,15 +87,20 @@ def ndcg(predicted, expected, k):
 # ============================================================
 
 def search(query):
+    # -----------------------------
+    # First turn
+    # -----------------------------
+    messages = [
+        {
+            "role": "user",
+            "content": query,
+        }
+    ]
+
     response = requests.post(
         f"{BASE_URL}/chat",
         json={
-            "messages": [
-                {
-                    "role": "user",
-                    "content": query
-                }
-            ],
+            "messages": messages,
             "top_k": TOP_K,
         },
     )
@@ -103,6 +108,41 @@ def search(query):
     response.raise_for_status()
 
     result = response.json()
+
+    # -----------------------------
+    # Automatic clarification
+    # -----------------------------
+    if not result.get("end_of_conversation", True):
+
+        print("\nAssistant:")
+        print(result["reply"])
+
+        messages.append(
+            {
+                "role": "assistant",
+                "content": result["reply"],
+            }
+        )
+
+        # automatic reply
+        messages.append(
+            {
+                "role": "user",
+                "content": "Mid",
+            }
+        )
+
+        response = requests.post(
+            f"{BASE_URL}/chat",
+            json={
+                "messages": messages,
+                "top_k": TOP_K,
+            },
+        )
+
+        response.raise_for_status()
+
+        result = response.json()
 
     print("=" * 80)
     print("QUERY:", query)
