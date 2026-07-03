@@ -4,7 +4,7 @@
 
 This project is a conversational SHL Assessment Recommendation API that recommends the most suitable SHL assessments from natural language hiring requirements.
 
-The system combines hybrid retrieval, semantic search, neural reranking, and conversational clarification to recommend grounded SHL assessments while supporting multi-turn interactions.
+The system combines **hybrid retrieval**, **semantic search**, **neural reranking**, and **conversational clarification** to recommend grounded SHL assessments while supporting multi-turn interactions.
 
 The API is built with **FastAPI** and deployed on **Railway**.
 
@@ -16,7 +16,7 @@ The API is built with **FastAPI** and deployed on **Railway**.
 - Clarification questions for incomplete hiring requirements
 - Multi-turn conversation support
 - Recommendation refinement using conversation history
-- Assessment comparison
+- Assessment comparison using SHL catalog data
 - Out-of-scope request handling
 - Hybrid Retrieval (BM25 + Dense Retrieval)
 - FAISS semantic search
@@ -30,7 +30,7 @@ The API is built with **FastAPI** and deployed on **Railway**.
 
 # Motivation
 
-Recruiters typically describe hiring requirements in natural language rather than structured filters.
+Recruiters usually describe hiring requirements in natural language rather than structured filters.
 
 For example,
 
@@ -38,57 +38,7 @@ For example,
 
 must be translated into relevant SHL assessments.
 
-This project addresses that challenge through a hybrid retrieval pipeline that combines lexical search, semantic retrieval, metadata filtering, and neural reranking.
-
----
-
-# Relation to Previous Projects
-
-This work extends techniques developed in my previous AI and retrieval projects.
-
-## Hybrid Retrieval
-
-Previously, I developed hybrid retrieval systems combining lexical and semantic retrieval for scientific and molecular datasets.
-
-The same principles are applied here through:
-
-- BM25 sparse retrieval
-- FAISS dense retrieval
-- Metadata filtering
-
----
-
-## Neural Re-ranking
-
-In previous retrieval systems I explored transformer-based reranking to improve search quality.
-
-The same architecture is adopted here:
-
-```
-Candidate Retrieval
-        │
-        ▼
-Cross Encoder
-        │
-        ▼
-Final Ranking
-```
-
-Cross-Encoder reranking improves recommendation quality beyond embedding similarity alone.
-
----
-
-## Conversational AI
-
-Unlike earlier retrieval projects that processed single queries, this system supports:
-
-- Clarification questions
-- Multi-turn conversations
-- Recommendation refinement
-- Assessment comparison
-- Out-of-scope detection
-
-making the system closer to a production conversational assistant.
+This project addresses that challenge through a hybrid retrieval pipeline combining lexical search, semantic retrieval, metadata filtering, and neural reranking.
 
 ---
 
@@ -124,7 +74,7 @@ making the system closer to a production conversational assistant.
              FastAPI REST API
                       │
                       ▼
-              Conversational Response
+          Conversational Response
 ```
 
 ---
@@ -134,28 +84,30 @@ making the system closer to a production conversational assistant.
 - Python
 - FastAPI
 - Sentence Transformers
-- Cross Encoder
+- CrossEncoder
 - FAISS
 - Rank-BM25
-- NumPy
 - NetworkX
+- NumPy
 - Pydantic
 
 ---
 
 # Evaluation
 
-The retrieval pipeline was evaluated using representative hiring scenarios covering Java, Python, SQL, and Docker roles.
+The recommendation pipeline was evaluated on representative hiring scenarios covering Java, Python, SQL, and Docker roles.
+
+The evaluation simulates conversational interactions by automatically answering clarification questions before measuring recommendation quality.
 
 | Metric | Score |
 |--------|------:|
-| Precision@5 | **0.2500** |
-| Recall@5 | **0.7917** |
+| Precision@10 | **0.1500** |
+| Recall@10 | **0.9167** |
 | Hit Rate | **1.0000** |
-| MRR | **0.8750** |
-| NDCG@5 | **0.7881** |
+| MRR | **1.0000** |
+| NDCG@10 | **0.9413** |
 
-These results demonstrate that the hybrid retrieval pipeline consistently retrieves relevant SHL assessments while ranking the most appropriate recommendations near the top of the result list.
+These results demonstrate that the hybrid retrieval and reranking pipeline consistently retrieves relevant SHL assessments while ranking the most relevant assessments at the top of the recommendation list.
 
 ---
 
@@ -183,7 +135,7 @@ Response
 POST /chat
 ```
 
-Request
+### Request
 
 ```json
 {
@@ -193,15 +145,15 @@ Request
       "content": "Python developer"
     }
   ],
-  "top_k": 5
+  "top_k": 10
 }
 ```
 
-Response
+### Response
 
 ```json
 {
-  "reply": "I found 5 SHL assessments...",
+  "reply": "I found 10 SHL assessments that best match your requirements.",
   "recommendations": [
     {
       "name": "Python (New)",
@@ -222,38 +174,50 @@ Response
 
 # Deployment
 
-**Production API**
+## Production API
 
+```
 https://shl-agent-production-2bdb.up.railway.app
+```
 
-**Health Endpoint**
+### Health Endpoint
 
+```
 https://shl-agent-production-2bdb.up.railway.app/health
+```
 
-**Swagger Documentation**
+### Swagger UI
 
+```
 https://shl-agent-production-2bdb.up.railway.app/docs
+```
 
 ---
 
 # Repository Structure
 
 ```
-src/
-│── api.py
-│── parser.py
-│── retriever.py
-│── reranker.py
-│── explainer.py
-│── fusion.py
-
-data/
-graph/
-embeddings/
-evaluation/
-
-README.md
-requirements.txt
+SHL-Agent/
+│
+├── src/
+│   ├── api.py
+│   ├── parser.py
+│   ├── retriever.py
+│   ├── reranker.py
+│   ├── explainer.py
+│   ├── fusion.py
+│   └── metadata_retriever.py
+│
+├── data/
+├── graph/
+├── embeddings/
+├── evaluation/
+│   ├── evaluate.py
+│   └── test_queries.json
+│
+├── README.md
+├── requirements.txt
+└── main.py
 ```
 
 ---
@@ -261,10 +225,11 @@ requirements.txt
 # Future Improvements
 
 - Learning-to-Rank models
-- Better behavioral competency extraction
+- Better competency extraction
 - LLM-assisted intent extraction
-- Feedback-driven ranking optimization
 - Personalized recruiter preferences
+- Feedback-driven ranking optimization
+- Automatic conversation memory summarization
 
 ---
 
