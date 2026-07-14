@@ -4,11 +4,11 @@ import requests
 API = "http://localhost:8000/chat"
 
 st.set_page_config(
-    page_title="SHL Assessment Recommender",
+    page_title=" Assessment Recommender",
     layout="wide",
 )
 
-st.title(" SHL Assessment Recommendation Agent")
+st.title("  Assessment Recommendation Agent")
 
 query = st.text_area(
     "Describe your hiring requirements",
