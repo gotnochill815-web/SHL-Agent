@@ -1,8 +1,8 @@
-# SHL Assessment Recommendation System
+#  Assessment Recommendation System
 
 ## Overview
 
-This project is a conversational SHL Assessment Recommendation API that recommends the most suitable SHL assessments from natural language hiring requirements.
+This project is a conversational  Assessment Recommendation API that recommends the most suitable SHL assessments from natural language hiring requirements.
 
 The system combines **hybrid retrieval**, **semantic search**, **neural reranking**, and **conversational clarification** to recommend grounded SHL assessments while supporting multi-turn interactions.
 
