@@ -233,6 +233,3 @@ SHL-Agent/
 
 ---
 
-# Acknowledgements
-
-Developed as part of the **SHL Generative AI Assessment Recommendation Challenge**.
